@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Densaulyq</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#0f172a;min-height:100vh}
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:230px;min-width:230px;background:#0d1f3c;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.logo h2{color:#fff;font-size:18px;font-weight:700;letter-spacing:-0.3px}
+.logo h2 span{color:#3b82f6}
+.logo p{color:#64748b;font-size:11px;margin-top:3px;text-transform:uppercase;letter-spacing:0.5px}
+.nav{padding:14px 10px;flex:1;overflow-y:auto}
+.nav-group{margin-bottom:18px}
+.nav-group-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(100,116,139,0.6);padding:0 10px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;cursor:pointer;color:#94a3b8;font-size:13.5px;transition:all 0.13s;user-select:none}
+.nav-item:hover{background:#1a3255;color:#fff}
+.nav-item.active{background:#2563eb;color:#fff;font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.8}
+.nav-item.active svg{opacity:1}
+.sidebar-user{padding:14px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* MAIN */
+.main{margin-left:230px;flex:1;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:-0.2px}
+.content{padding:24px 28px;flex:1}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.13s;font-family:inherit}
+.btn-primary{background:#2563eb;color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.btn-secondary:hover{background:#e2e8f0}
+.btn-sm{padding:5px 11px;font-size:12px}
+
+/* CARDS */
+.card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
+.card-head{padding:18px 22px 0;display:flex;justify-content:space-between;align-items:center}
+.card-head h3{font-size:15px;font-weight:600}
+.card-head p{font-size:12px;color:#64748b;margin-top:2px}
+.card-body{padding:18px 22px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* BADGES */
+.badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;display:inline-block}
+.b-blue{background:#dbeafe;color:#2563eb}
+.b-green{background:#d1fae5;color:#059669}
+.b-warn{background:#fef3c7;color:#d97706}
+.b-red{background:#fee2e2;color:#dc2626}
+.b-gray{background:#f1f5f9;color:#64748b}
+
+/* STAT CARDS */
+.stat{background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.stat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
+.stat-lbl{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.4px}
+.stat-val{font-size:24px;font-weight:700;margin:4px 0 3px;line-height:1}
+.stat-sub{font-size:12px;color:#94a3b8}
+
+/* PROGRESS */
+.prog-wrap{margin:7px 0}
+.prog-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.prog-bar{height:5px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:#94a3b8;font-weight:500;padding:8px 14px;border-bottom:1px solid #e2e8f0}
+.tbl td{padding:11px 14px;border-bottom:1px solid #f8fafc;font-size:13.5px}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#f8fafc}
+
+/* APPT */
+.appt{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid #f1f5f9}
+.appt:last-child{border-bottom:none}
+.appt-date{min-width:48px;text-align:center;background:#dbeafe;border-radius:8px;padding:7px 5px}
+.appt-day{font-size:20px;font-weight:700;color:#2563eb;line-height:1}
+.appt-mon{font-size:10px;color:#3b82f6;text-transform:uppercase}
+
+/* HEALTH CIRCLE */
+.hcircle{position:relative;width:96px;height:96px;flex-shrink:0}
+.hcircle svg{transform:rotate(-90deg)}
+.hcircle-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.hcircle-num{font-size:23px;font-weight:700;color:#2563eb;line-height:1}
+.hcircle-lbl{font-size:10px;color:#94a3b8}
+
+/* AI CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:430px}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:9px;align-items:flex-end}
+.msg.user{flex-direction:row-reverse}
+.msg-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.msg-av.ai{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.msg-av.user{background:#2563eb;color:#fff}
+.msg-bbl{max-width:76%;padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
+.msg.ai .msg-bbl{background:#f1f5f9;color:#0f172a;border-bottom-left-radius:3px}
+.msg.user .msg-bbl{background:#2563eb;color:#fff;border-bottom-right-radius:3px}
+.chat-input-area{padding:10px 14px;border-top:1px solid #f1f5f9;display:flex;gap:8px;align-items:center}
+.chat-input{flex:1;padding:9px 14px;border:1px solid #e2e8f0;border-radius:22px;font-size:13.5px;font-family:inherit;outline:none}
+.chat-input:focus{border-color:#2563eb}
+.send-btn{width:36px;height:36px;border-radius:50%;background:#2563eb;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.send-btn:hover{background:#1d4ed8}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:ty 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes ty{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+.sugg{padding:7px 14px;display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid #f8fafc}
+.sugg button{font-size:12px;padding:5px 10px;border-radius:20px;background:#f1f5f9;border:1px solid #e2e8f0;cursor:pointer;font-family:inherit;color:#334155}
+.sugg button:hover{background:#e2e8f0}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:999}
+.modal{background:#fff;border-radius:13px;width:480px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.15)}
+.modal-hd{padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between}
+.modal-hd h3{font-size:15px;font-weight:600}
+.modal-close{width:26px;height:26px;border-radius:6px;border:none;background:#f1f5f9;cursor:pointer;font-size:14px}
+.modal-bd{padding:22px}
+.modal-ft{padding:14px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:9px}
+
+/* FORM */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12.5px;font-weight:500;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .13s;background:#fff}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#2563eb}
+.fg textarea{resize:vertical;min-height:72px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* LIST ITEM */
+.li{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #f8fafc}
+.li:last-child{border-bottom:none}
+.li-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+
+/* PAGE ANIM */
+.page{animation:fi .18s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:99px}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <h2>Den<span>saulyq</span></h2>
+    <p>Patient portal</p>
+  </div>
+  <nav class="nav" id="nav"></nav>
+  <div class="sidebar-user">
+    <div class="avatar" id="sidebar-avatar">AD</div>
+    <div>
+      <div style="font-size:13px;color:#fff;font-weight:500" id="sidebar-name">Patient</div>
+      <div style="font-size:11px;color:#64748b" id="sidebar-role">Patient</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <header class="topbar">
+    <h1 id="page-title">Dashboard</h1>
+    <div id="topbar-actions"></div>
+  </header>
+  <div class="content" id="content"></div>
+</main>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Book appointment</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-bd" id="modal-body">
+      <div class="fg"><label>Doctor speciality</label>
+        <select id="m-doc">
+          <option value="">Select speciality</option>
+          <option>Therapist</option><option>Cardiologist</option><option>Neurologist</option>
+          <option>Endocrinologist</option><option>Gastroenterologist</option><option>Ophthalmologist</option>
+          <option>ENT</option><option>Dermatologist</option><option>Urologist</option><option>Surgeon</option>
+        </select>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Date</label><input type="date" id="m-date"/></div>
+        <div class="fg"><label>Time</label><input type="time" id="m-time"/></div>
+      </div>
+      <div class="fg"><label>Reason</label><textarea id="m-reason" placeholder="Describe your symptoms..."></textarea></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAppt()">Book</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───
+const API_BASE = (() => {
+  const qsApi = new URLSearchParams(window.location.search).get('api');
+  if (qsApi) return qsApi.replace(/\/$/, '');
+  if (window.location.protocol.startsWith('http') && window.location.port === '8000') {
+    return window.location.origin;
+  }
+  return 'http://localhost:8000';
+})();
+const USER_ID = 1;
+
+let USER = {name:'Alibek Dzhaksybekov',initials:'AD',dob:'15.03.1990',iin:'900315300123',blood:'II+',phone:'+7 700 123 45 67',email:'alibek@email.com',address:'Almaty, Abay st. 14, apt. 22',height:178,weight:82};
+
+let ANALYSES = [
+  {id:1,name:'Complete blood count',date:'12.03.2025',doctor:'Ivanova N.S.',status:'ready',results:[
+    {param:'Hemoglobin',val:145,unit:'g/L',norm:'120–160',ok:true},
+    {param:'Erythrocytes',val:4.8,unit:'×10¹²/L',norm:'4.0–5.5',ok:true},
+    {param:'Leukocytes',val:9.1,unit:'×10⁹/L',norm:'4.0–9.0',ok:false},
+    {param:'Platelets',val:210,unit:'×10⁹/L',norm:'150–400',ok:true},
+  ]},
+  {id:2,name:'Blood biochemistry',date:'12.03.2025',doctor:'Ivanova N.S.',status:'ready',results:[
+    {param:'Glucose',val:5.2,unit:'mmol/L',norm:'3.9–6.1',ok:true},
+    {param:'Cholesterol',val:5.8,unit:'mmol/L',norm:'< 5.2',ok:false},
+    {param:'ALT',val:28,unit:'U/L',norm:'< 40',ok:true},
+    {param:'AST',val:24,unit:'U/L',norm:'< 40',ok:true},
+    {param:'Bilirubin',val:12,unit:'µmol/L',norm:'< 20.5',ok:true},
+  ]},
+  {id:3,name:'Urinalysis',date:'01.02.2025',doctor:'Petrov A.I.',status:'ready',results:[
+    {param:'Protein',val:'Not detected',unit:'',norm:'Not detected',ok:true},
+    {param:'Glucose',val:'Not detected',unit:'',norm:'Not detected',ok:true},
+  ]},
+  {id:4,name:'ECG',date:'15.04.2025',doctor:'Karpova V.M.',status:'processing',results:[]},
+];
+
+let APPOINTMENTS = [
+  {id:1,doctor:'Smirnov D.A.',spec:'Cardiologist',day:'18',mon:'Apr',time:'09:30',place:'Room 215',status:'confirmed'},
+  {id:2,doctor:'Ivanova N.S.',spec:'Therapist',day:'25',mon:'Apr',time:'14:00',place:'Room 105',status:'confirmed'},
+  {id:3,doctor:'Akhmetov B.K.',spec:'Neurologist',day:'02',mon:'May',time:'11:15',place:'Room 318',status:'pending'},
+];
+
+let REFERRALS = [
+  {id:1,name:'Complete blood count',from:'Ivanova N.S.',date:'10.04.2025',deadline:'30.04.2025',status:'active'},
+  {id:2,name:'Abdominal ultrasound',from:'Karpova V.M.',date:'05.04.2025',deadline:'05.05.2025',status:'active'},
+  {id:3,name:'Cardiologist consultation',from:'Ivanova N.S.',date:'01.03.2025',deadline:'01.04.2025',status:'completed'},
+];
+
+function getInitials(fullName) {
+  if(!fullName) return 'PT';
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if(parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function monthShort(isoDate) {
+  if(!isoDate) return '---';
+  const [y,m,d] = isoDate.split('-');
+  if(!y || !m || !d) return '---';
+  const dt = new Date(`${y}-${m}-${d}T00:00:00`);
+  return dt.toLocaleDateString('ru-RU', {month:'short'}).replace('.', '');
+}
+
+function normalizeDate(backendDate) {
+  if(!backendDate) return '';
+  const parts = backendDate.split('.');
+  if(parts.length === 3) {
+    const [dd,mm,yyyy] = parts;
+    return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+  }
+  return backendDate;
+}
+
+const I18N_MAP = {
+  'готово': 'ready',
+  'в обработке': 'processing',
+  'ожидание': 'pending',
+  'подтверждено': 'confirmed',
+  'активно': 'active',
+  'выполнено': 'completed',
+  'Кабинет': 'Room',
+  'Терапевт': 'Therapist',
+  'Кардиолог': 'Cardiologist',
+  'Невролог': 'Neurologist',
+  'Эндокринолог': 'Endocrinologist',
+  'Гастроэнтеролог': 'Gastroenterologist',
+  'Офтальмолог': 'Ophthalmologist',
+  'ЛОР': 'ENT',
+  'Дерматолог': 'Dermatologist',
+  'Уролог': 'Urologist',
+  'Хирург': 'Surgeon',
+  'Общий анализ крови': 'Complete blood count',
+  'Биохимия крови': 'Blood biochemistry',
+  'Анализ мочи': 'Urinalysis',
+  'ЭКГ': 'ECG',
+  'УЗИ брюшной полости': 'Abdominal ultrasound',
+  'Консультация кардиолога': 'Cardiologist consultation',
+  'Гемоглобин': 'Hemoglobin',
+  'Эритроциты': 'Erythrocytes',
+  'Лейкоциты': 'Leukocytes',
+  'Тромбоциты': 'Platelets',
+  'Глюкоза': 'Glucose',
+  'Холестерин': 'Cholesterol',
+  'АЛТ': 'ALT',
+  'АСТ': 'AST',
+  'Билирубин': 'Bilirubin',
+  'Белок': 'Protein',
+  'Отс.': 'Not detected',
+  'г/л': 'g/L',
+  'ммоль/л': 'mmol/L',
+  'Ед/л': 'U/L',
+  'мкмоль/л': 'umol/L',
+  '×10¹²/л': '×10¹²/L',
+  '×10⁹/л': '×10⁹/L',
+};
+
+function t(value) {
+  if (value == null) return value;
+  let out = String(value);
+  Object.entries(I18N_MAP).forEach(([ru, en]) => {
+    out = out.split(ru).join(en);
+  });
+  return out;
+}
+
+async function apiGet(path) {
+  const res = await fetch(`${API_BASE}${path}`);
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function apiPost(path, payload) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function apiPut(path, payload) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function loadInitialData() {
+  try {
+    const [user, analyses, appointments, referrals] = await Promise.all([
+      apiGet(`/user/${USER_ID}`),
+      apiGet(`/analyses/${USER_ID}`),
+      apiGet(`/appointments/${USER_ID}`),
+      apiGet(`/referrals/${USER_ID}`),
+    ]);
+
+    USER = {
+      name: user.name || USER.name,
+      initials: getInitials(user.name || USER.name),
+      dob: user.dob || USER.dob,
+      iin: user.iin || USER.iin,
+      blood: user.blood_type || USER.blood,
+      phone: user.phone || USER.phone,
+      email: user.email || USER.email,
+      address: user.address || USER.address,
+      height: user.height ?? USER.height,
+      weight: user.weight ?? USER.weight
+    };
+
+    ANALYSES = (analyses || []).map(a => ({
+      id: a.id,
+      name: t(a.name),
+      date: a.date,
+      doctor: t(a.doctor),
+      status: t(a.status || ''),
+      results: (a.results || []).map(r => ({
+        ...r,
+        param: t(r.param),
+        unit: t(r.unit),
+        norm: t(r.norm),
+        val: t(r.val)
+      }))
+    }));
+
+    APPOINTMENTS = (appointments || []).map(a => {
+      const iso = normalizeDate(a.date);
+      const day = iso ? iso.split('-')[2] : '--';
+      return {
+        id: a.id,
+        doctor: t(a.doctor),
+        spec: t(a.speciality || a.doctor),
+        day,
+        mon: monthShort(iso),
+        time: a.time || '--:--',
+        place: t(a.place || 'TBD'),
+        status: t(a.status || 'pending'),
+        dateISO: iso
+      };
+    });
+
+    REFERRALS = (referrals || []).map(r => ({
+      id: r.id,
+      name: t(r.name),
+      from: t(r.from_doctor),
+      date: r.issue_date,
+      deadline: r.deadline,
+      status: t(r.status)
+    }));
+
+    profileData = {...USER};
+  } catch (e) {
+    console.error('Failed to load data from backend:', e);
+  }
+}
+
+// ─── NAVIGATION ───
+const PAGES = [
+  {id:'dashboard',label:'Dashboard',group:'Overview',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',title:'Dashboard'},
+  {id:'analyses',label:'My analyses',group:'Medical records',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-5-5z"/><polyline points="14 3 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>',title:'Analysis results'},
+  {id:'referrals',label:'Referrals',group:'Medical records',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',title:'Referrals'},
+  {id:'appointments',label:'Appointments',group:'Visits',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',title:'Appointments'},
+  {id:'ai',label:'AI Assistant',group:'AI',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',title:'AI Assistant'},
+  {id:'profile',label:'My profile',group:'Account',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'My profile'},
+];
+
+let currentPage = 'dashboard';
+let selectedAnalysis = null;
+let chatMessages = [
+  {role:'ai',text:'Hello! I am your medical AI assistant 🩺\n\nI can:\n• Analyze your test results\n• Suggest which doctor to visit\n• Answer medical questions\n\nHow can I help you today?'}
+];
+let aiLoading = false;
+let profileEditing = false;
+let profileData = {...USER};
+
+function buildNav() {
+  const groups = [...new Set(PAGES.map(p => p.group))];
+  const nav = document.getElementById('nav');
+  nav.innerHTML = groups.map(g => `
+    <div class="nav-group">
+      <div class="nav-group-label">${g}</div>
+      ${PAGES.filter(p=>p.group===g).map(p=>`
+        <div class="nav-item ${p.id===currentPage?'active':''}" onclick="navigate('${p.id}')" id="nav-${p.id}">
+          ${p.icon} ${p.label}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderSidebarUser() {
+  const avatarEl = document.getElementById('sidebar-avatar');
+  const nameEl = document.getElementById('sidebar-name');
+  if (avatarEl) avatarEl.textContent = USER.initials || 'PT';
+  if (nameEl) {
+    const first = (USER.name || 'Patient').split(/\s+/).filter(Boolean).slice(0, 2).join(' ');
+    nameEl.textContent = first || 'Patient';
+  }
+}
+
+function navigate(id) {
+  currentPage = id;
+  const pg = PAGES.find(p=>p.id===id);
+  document.getElementById('page-title').textContent = pg.title;
+  buildNav();
+  renderTopbarActions();
+  renderPage();
+}
+
+function renderTopbarActions() {
+  const el = document.getElementById('topbar-actions');
+  if(currentPage==='appointments') {
+    el.innerHTML = `<button class="btn btn-primary" onclick="openModal()">+ Book appointment</button>`;
+  } else if(currentPage==='dashboard') {
+    el.innerHTML = `<button class="btn btn-primary" onclick="navigate('ai')">✨ Ask AI</button>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// ─── RENDER ───
+function renderPage() {
+  const c = document.getElementById('content');
+  c.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'page';
+  switch(currentPage) {
+    case 'dashboard': div.innerHTML = renderDashboard(); break;
+    case 'analyses': div.innerHTML = renderAnalyses(); break;
+    case 'referrals': div.innerHTML = renderReferrals(); break;
+    case 'appointments': div.innerHTML = renderAppointments(); break;
+    case 'ai': div.innerHTML = renderAI(); break;
+    case 'profile': div.innerHTML = renderProfile(); break;
+  }
+  c.appendChild(div);
+  if(currentPage==='ai') initChat();
+  if(currentPage==='analyses') initAnalyses();
+}
+
+// ─── DASHBOARD ───
+function renderDashboard() {
+  const score = 74;
+  const r = 42, circ = 2*Math.PI*r;
+  const arc = circ * score / 100;
+  const indicators = [
+    {label:'Cardiovascular',val:82,color:'#2563eb'},
+    {label:'Metabolism',val:68,color:'#10b981'},
+    {label:'Immunity',val:71,color:'#8b5cf6'},
+    {label:'Overall condition',val:74,color:'#f59e0b'},
+  ];
+  return `
+  <div style="display:flex;gap:18px;margin-bottom:18px;align-items:flex-start">
+    <!-- Health score -->
+    <div class="card" style="flex:0 0 270px">
+      <div class="card-head"><div><h3>Health score</h3><p>Based on your analyses · AI</p></div></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:18px;margin-bottom:16px">
+          <div class="hcircle">
+            <svg width="96" height="96" viewBox="0 0 96 96">
+              <circle cx="48" cy="48" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+              <circle cx="48" cy="48" r="${r}" fill="none" stroke="#2563eb" stroke-width="8"
+                stroke-dasharray="${arc} ${circ}" stroke-linecap="round"/>
+            </svg>
+            <div class="hcircle-txt"><div class="hcircle-num">${score}</div><div class="hcircle-lbl">of 100</div></div>
+          </div>
+          <div>
+            <span class="badge b-warn" style="margin-bottom:8px">Good</span>
+            <p style="font-size:12.5px;color:#64748b;line-height:1.6">Minor deviations detected. We recommend monitoring cholesterol levels.</p>
+          </div>
+        </div>
+        ${indicators.map(i=>`
+          <div class="prog-wrap">
+            <div class="prog-row"><span style="color:#64748b">${i.label}</span><span style="font-weight:500">${i.val}%</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:${i.val}%;background:${i.color}"></div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <!-- Right -->
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px">
+      <div class="g4">
+        ${[
+          {lbl:'Last visit',val:'12 Mar',sub:'Therapist',ico:'🏥',bg:'#dbeafe',c:'#2563eb'},
+          {lbl:'Referrals',val:'2',sub:'Due by 30 Apr',ico:'📋',bg:'#d1fae5',c:'#059669'},
+          {lbl:'Analyses',val:'4',sub:'3 ready',ico:'🧪',bg:'#ede9fe',c:'#7c3aed'},
+          {lbl:'Appointments',val:'3',sub:'Next on 18 Apr',ico:'📅',bg:'#fef3c7',c:'#d97706'},
+        ].map(s=>`
+          <div class="stat">
+            <div class="stat-icon" style="background:${s.bg}">${s.ico}</div>
+            <div class="stat-lbl">${s.lbl}</div>
+            <div class="stat-val" style="color:${s.c}">${s.val}</div>
+            <div class="stat-sub">${s.sub}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Upcoming appointments</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('appointments')">All →</button></div>
+        <div class="card-body" style="padding-top:10px">
+          ${APPOINTMENTS.slice(0,2).map(a=>`
+            <div class="appt">
+              <div class="appt-date"><div class="appt-day">${a.day}</div><div class="appt-mon">${a.mon}</div></div>
+              <div style="flex:1"><div style="font-size:14px;font-weight:600">${a.doctor}</div><div style="font-size:12px;color:#64748b">${a.spec} · ${a.place}</div></div>
+              <div style="text-align:right"><div style="font-size:14px;font-weight:600">${a.time}</div><span class="badge b-green">${a.status}</span></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><div><h3>Latest analyses</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('analyses')">All →</button></div>
+      <div class="card-body" style="padding-top:8px">
+        ${ANALYSES.slice(0,3).map(a=>`
+          <div class="li">
+            <div class="li-icon" style="background:#dbeafe">🧪</div>
+            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${a.name}</div><div style="font-size:12px;color:#64748b">${a.date} · ${a.doctor}</div></div>
+            <span class="badge ${a.status==='ready'?'b-green':'b-warn'}">${a.status}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><h3>Active referrals</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('referrals')">All →</button></div>
+      <div class="card-body" style="padding-top:8px">
+        ${REFERRALS.map(r=>`
+          <div class="li">
+            <div class="li-icon" style="background:${r.status==='active'?'#d1fae5':'#f1f5f9'}">📋</div>
+            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${r.name}</div><div style="font-size:12px;color:#64748b">from ${r.from} · until ${r.deadline}</div></div>
+            <span class="badge ${r.status==='active'?'b-green':'b-gray'}">${r.status}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── ANALYSES ───
+function renderAnalyses() {
+  return `
+  <div class="g2" style="align-items:flex-start">
+    <div class="card">
+      <div class="card-head"><h3>My analyses</h3></div>
+      <div style="padding:6px 0">
+        ${ANALYSES.map(a=>`
+          <div onclick="selectAnalysis(${a.id})" style="padding:13px 22px;cursor:pointer;border-bottom:1px solid #f8fafc;background:${selectedAnalysis?.id===a.id?'#eff6ff':'transparent'};transition:background .1s">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:600;margin-bottom:2px">${a.name}</div>
+                <div style="font-size:12px;color:#64748b">${a.date} · ${a.doctor}</div>
+              </div>
+              <span class="badge ${a.status==='ready'?'b-green':'b-warn'}">${a.status}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div id="analysis-detail">
+      <div style="display:flex;align-items:center;justify-content:center;height:180px;color:#94a3b8;font-size:14px">← Select an analysis</div>
+    </div>
+  </div>`;
+}
+
+function initAnalyses() {
+  if(selectedAnalysis) renderAnalysisDetail();
+}
+
+function selectAnalysis(id) {
+  selectedAnalysis = ANALYSES.find(a=>a.id===id);
+  document.querySelectorAll('#content [onclick^="selectAnalysis"]').forEach(el=>{
+    const eid = parseInt(el.getAttribute('onclick').match(/\d+/)[0]);
+    el.style.background = eid===id ? '#eff6ff' : 'transparent';
+  });
+  renderAnalysisDetail();
+}
+
+function renderAnalysisDetail() {
+  const el = document.getElementById('analysis-detail');
+  if(!el || !selectedAnalysis) return;
+  const a = selectedAnalysis;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <div><h3>${a.name}</h3><p>${a.date} · ${a.doctor}</p></div>
+        <button class="btn btn-secondary btn-sm" onclick="selectedAnalysis=null;document.getElementById('analysis-detail').innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:180px;color:#94a3b8;font-size:14px\\'>← Select an analysis</div>'">✕</button>
+      </div>
+      <div class="card-body" style="padding:8px 0 16px">
+        ${a.results.length ? `
+          <table class="tbl">
+            <thead><tr><th>Parameter</th><th>Value</th><th>Normal range</th><th>Status</th></tr></thead>
+            <tbody>
+              ${a.results.map(r=>`
+                <tr>
+                  <td style="font-weight:500">${r.param}</td>
+                  <td style="font-family:monospace">${r.val} ${r.unit}</td>
+                  <td style="color:#64748b">${r.norm}</td>
+                  <td><span class="badge ${r.ok?'b-green':'b-red'}">${r.ok?'normal':'high'}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : `<div style="padding:36px;text-align:center;color:#94a3b8"><div style="font-size:32px;margin-bottom:8px">⏳</div>Results are processing</div>`}
+      </div>
+    </div>`;
+}
+
+// ─── REFERRALS ───
+function renderReferrals() {
+  return `
+  <div class="card">
+    <div class="card-head"><h3>Referrals</h3><p>Active and completed doctor referrals</p></div>
+    <div class="card-body" style="padding:0">
+      <table class="tbl">
+        <thead><tr><th>Referral</th><th>Issued by</th><th>Issue date</th><th>Deadline</th><th>Status</th></tr></thead>
+        <tbody>
+          ${REFERRALS.map(r=>`
+            <tr>
+              <td style="font-weight:500">${r.name}</td>
+              <td style="color:#64748b">${r.from}</td>
+              <td style="color:#64748b">${r.date}</td>
+              <td style="color:#64748b">${r.deadline}</td>
+              <td><span class="badge ${r.status==='active'?'b-green':'b-gray'}">${r.status}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ─── APPOINTMENTS ───
+function renderAppointments() {
+  return `
+  <div class="card">
+    <div class="card-head"><h3>My appointments</h3><p>Upcoming doctor visits</p></div>
+    <div class="card-body">
+      ${APPOINTMENTS.map(a=>`
+        <div class="appt">
+          <div class="appt-date"><div class="appt-day">${a.day}</div><div class="appt-mon">${a.mon}</div></div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600">${a.doctor}</div><div style="font-size:12.5px;color:#64748b">${a.spec} · ${a.place}</div></div>
+          <div style="text-align:right">
+            <div style="font-size:15px;font-weight:700;margin-bottom:4px">${a.time}</div>
+            <span class="badge ${a.status==='confirmed'?'b-green':'b-warn'}">${a.status}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+// ─── AI ───
+function renderAI() {
+  return `
+  <div class="card">
+    <div class="card-head">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">AI</div>
+        <div><h3>AI Assistant</h3><p style="color:#10b981">● online · Gemini 2.0 Flash</p></div>
+      </div>
+    </div>
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div class="sugg" id="sugg">
+        <button onclick="setInput('What does high cholesterol mean?')">What does high cholesterol mean?</button>
+        <button onclick="setInput('Please analyze my test results')">Analyze my test results</button>
+        <button onclick="setInput('I have headache and fatigue, which doctor should I visit?')">Headache and fatigue</button>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" id="chat-input" placeholder="Describe symptoms or ask a question..."
+          onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <button class="send-btn" onclick="sendMsg()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function setInput(text) {
+  const inp = document.getElementById('chat-input');
+  if(inp) { inp.value = text; inp.focus(); }
+}
+
+function initChat() {
+  renderMessages();
+}
+
+function renderMessages() {
+  const el = document.getElementById('chat-msgs');
+  if(!el) return;
+  el.innerHTML = chatMessages.map(m=>`
+    <div class="msg ${m.role}">
+      <div class="msg-av ${m.role}">${m.role==='ai'?'AI':'AD'}</div>
+      <div class="msg-bbl">${m.text}</div>
+    </div>
+  `).join('') + (aiLoading ? `
+    <div class="msg ai">
+      <div class="msg-av ai">AI</div>
+      <div class="msg-bbl"><div class="typing"><span></span><span></span><span></span></div></div>
+    </div>
+  ` : '');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('chat-input');
+  if(!inp || !inp.value.trim() || aiLoading) return;
+  const text = inp.value.trim();
+  inp.value = '';
+  chatMessages.push({role:'user', text});
+  aiLoading = true;
+  renderMessages();
+
+  let reply = '';
+  try {
+    const d = await apiPost('/ai/chat', {
+      user_id: USER_ID,
+      message: text,
+      context: 'You are a medical AI assistant. Reply briefly, clearly, and in English with practical recommendations.'
+    });
+    reply = d.reply || 'Could not get a response.';
+  } catch(e) {
+    reply = '⚠️ Connection error: ' + e.message;
+  }
+  chatMessages.push({role:'ai', text:reply});
+  aiLoading = false;
+  renderMessages();
+}
+
+// ─── PROFILE ───
+function renderProfile() {
+  const d = profileData;
+  const bmi = (d.weight/(d.height/100)**2).toFixed(1);
+  return `
+  <div class="g2" style="align-items:flex-start">
+    <div class="card">
+      <div style="padding:22px;display:flex;align-items:center;gap:18px;border-bottom:1px solid #e2e8f0">
+        <div style="width:68px;height:68px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${USER.initials}</div>
+        <div>
+          <h2 style="font-size:18px;margin-bottom:6px">${d.name}</h2>
+          <span class="badge b-blue" style="margin-right:6px">IIN: ${d.iin}</span>
+          <span class="badge b-red">Blood type: ${d.blood}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500">Personal info</div>
+          <button class="btn btn-secondary btn-sm" onclick="toggleEdit()">${profileEditing?'💾 Save':'✏️ Edit'}</button>
+        </div>
+        ${[['Date of birth','dob'],['Phone','phone'],['Email','email'],['Address','address']].map(([lbl,key])=>`
+          <div style="margin-bottom:12px">
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">${lbl}</div>
+            ${profileEditing
+              ? `<input class="fg" style="width:100%;padding:8px 11px;border:1px solid #e2e8f0;border-radius:7px;font-size:13.5px;font-family:inherit" value="${d[key]}" oninput="profileData['${key}']=this.value"/>`
+              : `<div style="font-size:14px;font-weight:500">${d[key]}</div>`}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-body">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500;margin-bottom:14px">Medical data</div>
+          ${[
+            ['Height', d.height + ' cm'],
+            ['Weight', d.weight + ' kg'],
+            ['BMI', bmi + ' — Normal'],
+            ['Blood type', d.blood],
+            ['Chronic diseases', 'None'],
+            ['Allergies', 'Penicillin'],
+          ].map(([k,v])=>`
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f8fafc">
+              <span style="font-size:13px;color:#64748b">${k}</span>
+              <span style="font-size:13px;font-weight:500">${v}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500;margin-bottom:14px">Health indicators</div>
+          ${[
+            ['Blood pressure','120/80 mmHg','b-green'],
+            ['Pulse','72 bpm','b-green'],
+            ['Temperature','36.6 °C','b-green'],
+            ['Oxygen saturation','98%','b-green'],
+          ].map(([k,v,b])=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f8fafc">
+              <span style="font-size:13px;color:#64748b">${k}</span>
+              <span class="badge ${b}">${v}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleEdit() {
+  if(profileEditing) {
+    saveProfile();
+    return;
+  }
+  profileEditing = true;
+  renderPage();
+}
+
+async function saveProfile() {
+  try {
+    await apiPut(`/user/${USER_ID}`, {
+      name: profileData.name,
+      phone: profileData.phone,
+      email: profileData.email,
+      address: profileData.address,
+      height: Number(profileData.height),
+      weight: Number(profileData.weight)
+    });
+    USER = {...profileData, initials:getInitials(profileData.name)};
+    profileEditing = false;
+    renderPage();
+  } catch (e) {
+    alert('Failed to save profile: ' + e.message);
+  }
+}
+
+// ─── MODAL ───
+function openModal() {
+  document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="fg"><label>Doctor speciality</label>
+      <select id="m-doc">
+        <option value="">Select speciality</option>
+        <option>Therapist</option><option>Cardiologist</option><option>Neurologist</option>
+        <option>Endocrinologist</option><option>Gastroenterologist</option><option>Ophthalmologist</option>
+        <option>ENT</option><option>Dermatologist</option><option>Urologist</option><option>Surgeon</option>
+      </select>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Date</label><input type="date" id="m-date"/></div>
+      <div class="fg"><label>Time</label><input type="time" id="m-time"/></div>
+    </div>
+    <div class="fg"><label>Reason</label><textarea id="m-reason" placeholder="Describe your symptoms..."></textarea></div>`;
+  document.querySelector('.modal-ft').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitAppt()">Book</button>`;
+}
+
+function submitAppt() {
+  const doc = document.getElementById('m-doc')?.value;
+  if(!doc) { alert('Please select a doctor speciality'); return; }
+  const date = document.getElementById('m-date')?.value;
+  const time = document.getElementById('m-time')?.value;
+  const reason = document.getElementById('m-reason')?.value || '';
+  if(!date || !time) { alert('Please select date and time'); return; }
+
+  apiPost('/appointments', {
+    user_id: USER_ID,
+    doctor: doc,
+    date,
+    time,
+    reason
+  }).then(async () => {
+    const appointments = await apiGet(`/appointments/${USER_ID}`);
+    APPOINTMENTS = (appointments || []).map(a => {
+      const iso = normalizeDate(a.date);
+      const day = iso ? iso.split('-')[2] : '--';
+      return {
+        id: a.id,
+        doctor: a.doctor,
+        spec: a.speciality || a.doctor,
+        day,
+        mon: monthShort(iso),
+        time: a.time || '--:--',
+        place: a.place || 'TBD',
+        status: a.status || 'pending',
+        dateISO: iso
+      };
+    });
+
+    document.getElementById('modal-body').innerHTML = `
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:52px;margin-bottom:12px">✅</div>
+        <h3 style="margin-bottom:6px">Request submitted!</h3>
+        <p style="color:#64748b;font-size:13.5px">You will receive confirmation soon</p>
+      </div>`;
+    document.querySelector('.modal-ft').innerHTML = '';
+    renderPage();
+    setTimeout(closeModal, 2200);
+  }).catch((e) => {
+    alert('Failed to create appointment: ' + e.message);
+  });
+}
+
+// ─── INIT ───
+async function initApp() {
+  await loadInitialData();
+  renderSidebarUser();
+  buildNav();
+  renderTopbarActions();
+  renderPage();
+}
+
+initApp();
+</script>
+</body>
+</html>
