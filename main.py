@@ -1,7 +1,4 @@
-"""
-МедКарта — Backend API (FastAPI + SQLite)
-Запуск: python main.py
-"""
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,8 +24,6 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyC8UGrZUIlAyTtaNe_o5IKly6pd8n
 DB_PATH = "medportal.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_PATH = os.path.join(BASE_DIR, "index1.html")
-
-# ──────────────────────────── DATABASE ────────────────────────────
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -62,7 +57,7 @@ def init_db():
         date TEXT,
         doctor TEXT,
         status TEXT DEFAULT 'в обработке',
-        results TEXT,  -- JSON строка
+        results TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id)
     )""")
@@ -98,13 +93,12 @@ def init_db():
     CREATE TABLE IF NOT EXISTS chat_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
-        role TEXT,  -- 'user' or 'ai'
+        role TEXT,
         message TEXT,
         timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id)
     )""")
 
-    # Seed demo user
     c.execute("SELECT id FROM users WHERE id=1")
     if not c.fetchone():
         c.execute("""INSERT INTO users (id, name, iin, dob, blood_type, phone, email, address, height, weight)
@@ -112,7 +106,6 @@ def init_db():
                              '+7 700 123 45 67', 'alibek@email.com',
                              'г. Алматы, ул. Абая 14, кв. 22', 178, 82)""")
 
-        # Seed analyses
         analyses_data = [
             (1, 'Общий анализ крови', '12.03.2025', 'Иванова Н.С.', 'готово',
              json.dumps([
@@ -130,7 +123,6 @@ def init_db():
         c.executemany("""INSERT INTO analyses (user_id, name, date, doctor, status, results)
                          VALUES (?,?,?,?,?,?)""", analyses_data)
 
-        # Seed appointments
         apts = [
             (1, 'Смирнов Д.А.', 'Кардиолог', '18.04.2025', '09:30', 'Кабинет 215', 'Плановый осмотр', 'подтверждено'),
             (1, 'Иванова Н.С.', 'Терапевт', '25.04.2025', '14:00', 'Кабинет 105', 'Контроль давления', 'подтверждено'),
@@ -138,7 +130,6 @@ def init_db():
         c.executemany("""INSERT INTO appointments (user_id, doctor, speciality, date, time, place, reason, status)
                          VALUES (?,?,?,?,?,?,?,?)""", apts)
 
-        # Seed referrals
         refs = [
             (1, 'Общий анализ крови', 'Иванова Н.С.', '10.04.2025', '30.04.2025', 'активно'),
             (1, 'УЗИ брюшной полости', 'Карпова В.М.', '05.04.2025', '05.05.2025', 'активно'),
@@ -148,8 +139,6 @@ def init_db():
 
     conn.commit()
     conn.close()
-
-# ──────────────────────────── MODELS ────────────────────────────
 
 class AppointmentCreate(BaseModel):
     user_id: int = 1
@@ -170,8 +159,6 @@ class ProfileUpdate(BaseModel):
     address: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
-
-# ──────────────────────────── ROUTES ────────────────────────────
 
 @app.get("/")
 def root():
@@ -247,15 +234,12 @@ async def ai_chat(data: ChatRequest):
     """Proxy для Gemini API — используется если ключ на бэкенде"""
     db = get_db()
     
-    # Save user message
     db.execute("INSERT INTO chat_history (user_id, role, message) VALUES (?,?,?)",
                (data.user_id, 'user', data.message))
     db.commit()
 
     system_prompt = data.context or """Ты — медицинский ИИ-ассистент. Отвечай кратко и по-дружески на русском языке."""
 
-    # Enrich prompt with patient profile and latest analyses so the AI can
-    # answer questions like "analyze my results" without asking for values again.
     user_row = db.execute(
         "SELECT name, dob, height, weight, blood_type FROM users WHERE id=?",
         (data.user_id,),
@@ -375,7 +359,6 @@ async def ai_chat(data: ChatRequest):
     except Exception as e:
         reply = f"Ошибка подключения к ИИ: {str(e)}. Проверьте GEMINI_API_KEY."
 
-    # Save AI reply
     db.execute("INSERT INTO chat_history (user_id, role, message) VALUES (?,?,?)",
                (data.user_id, 'ai', reply))
     db.commit()
@@ -421,7 +404,6 @@ async def ai_health_score(user_id: int = 1):
                 json={"contents": [{"parts": [{"text": prompt}]}]}
             )
             text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-            # Clean JSON
             text = text.strip().strip("```json").strip("```").strip()
             return json.loads(text)
     except Exception as e:
@@ -431,8 +413,6 @@ async def ai_health_score(user_id: int = 1):
 @app.on_event("startup")
 def on_startup():
     init_db()
-
-# ──────────────────────────── MAIN ────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn

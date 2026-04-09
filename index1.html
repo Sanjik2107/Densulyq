@@ -9,7 +9,6 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#0f172a;min-height:100vh}
 .app{display:flex;min-height:100vh}
 
-/* SIDEBAR */
 .sidebar{width:230px;min-width:230px;background:#0d1f3c;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
 .logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}
 .logo h2{color:#fff;font-size:18px;font-weight:700;letter-spacing:-0.3px}
@@ -26,13 +25,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sidebar-user{padding:14px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
 .avatar{width:34px;height:34px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
 
-/* MAIN */
 .main{margin-left:230px;flex:1;display:flex;flex-direction:column}
 .topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .topbar h1{font-size:17px;font-weight:700;letter-spacing:-0.2px}
 .content{padding:24px 28px;flex:1}
 
-/* BUTTONS */
 .btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.13s;font-family:inherit}
 .btn-primary{background:#2563eb;color:#fff}
 .btn-primary:hover{background:#1d4ed8}
@@ -40,19 +37,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-secondary:hover{background:#e2e8f0}
 .btn-sm{padding:5px 11px;font-size:12px}
 
-/* CARDS */
 .card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
 .card-head{padding:18px 22px 0;display:flex;justify-content:space-between;align-items:center}
 .card-head h3{font-size:15px;font-weight:600}
 .card-head p{font-size:12px;color:#64748b;margin-top:2px}
 .card-body{padding:18px 22px}
 
-/* GRID */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 
-/* BADGES */
 .badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;display:inline-block}
 .b-blue{background:#dbeafe;color:#2563eb}
 .b-green{background:#d1fae5;color:#059669}
@@ -60,41 +54,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .b-red{background:#fee2e2;color:#dc2626}
 .b-gray{background:#f1f5f9;color:#64748b}
 
-/* STAT CARDS */
 .stat{background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .stat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
 .stat-lbl{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.4px}
 .stat-val{font-size:24px;font-weight:700;margin:4px 0 3px;line-height:1}
 .stat-sub{font-size:12px;color:#94a3b8}
 
-/* PROGRESS */
 .prog-wrap{margin:7px 0}
 .prog-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
 .prog-bar{height:5px;background:#e2e8f0;border-radius:99px;overflow:hidden}
 .prog-fill{height:100%;border-radius:99px}
 
-/* TABLE */
 .tbl{width:100%;border-collapse:collapse}
 .tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:#94a3b8;font-weight:500;padding:8px 14px;border-bottom:1px solid #e2e8f0}
 .tbl td{padding:11px 14px;border-bottom:1px solid #f8fafc;font-size:13.5px}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tr:hover td{background:#f8fafc}
 
-/* APPT */
 .appt{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid #f1f5f9}
 .appt:last-child{border-bottom:none}
 .appt-date{min-width:48px;text-align:center;background:#dbeafe;border-radius:8px;padding:7px 5px}
 .appt-day{font-size:20px;font-weight:700;color:#2563eb;line-height:1}
 .appt-mon{font-size:10px;color:#3b82f6;text-transform:uppercase}
 
-/* HEALTH CIRCLE */
 .hcircle{position:relative;width:96px;height:96px;flex-shrink:0}
 .hcircle svg{transform:rotate(-90deg)}
 .hcircle-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
 .hcircle-num{font-size:23px;font-weight:700;color:#2563eb;line-height:1}
 .hcircle-lbl{font-size:10px;color:#94a3b8}
 
-/* AI CHAT */
 .chat-wrap{display:flex;flex-direction:column;height:430px}
 .chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
 .msg{display:flex;gap:9px;align-items:flex-end}
@@ -119,7 +107,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sugg button{font-size:12px;padding:5px 10px;border-radius:20px;background:#f1f5f9;border:1px solid #e2e8f0;cursor:pointer;font-family:inherit;color:#334155}
 .sugg button:hover{background:#e2e8f0}
 
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:999}
 .modal{background:#fff;border-radius:13px;width:480px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.15)}
 .modal-hd{padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between}
@@ -128,7 +115,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .modal-bd{padding:22px}
 .modal-ft{padding:14px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:9px}
 
-/* FORM */
 .fg{margin-bottom:14px}
 .fg label{display:block;font-size:12.5px;font-weight:500;margin-bottom:5px}
 .fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .13s;background:#fff}
@@ -136,16 +122,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fg textarea{resize:vertical;min-height:72px}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 
-/* LIST ITEM */
 .li{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #f8fafc}
 .li:last-child{border-bottom:none}
 .li-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 
-/* PAGE ANIM */
 .page{animation:fi .18s ease}
 @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
-/* SCROLLBAR */
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:99px}
 
@@ -155,7 +138,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <body>
 <div class="app">
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="logo">
     <h2>Den<span>saulyq</span></h2>
@@ -171,7 +153,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </aside>
 
-<!-- MAIN -->
 <main class="main">
   <header class="topbar">
     <h1 id="page-title">Dashboard</h1>
@@ -182,7 +163,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 </div>
 
-<!-- MODAL -->
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
     <div class="modal-hd">
@@ -212,7 +192,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-// ─── DATA ───
 const API_BASE = (() => {
   const qsApi = new URLSearchParams(window.location.search).get('api');
   if (qsApi) return qsApi.replace(/\/$/, '');
@@ -429,7 +408,6 @@ async function loadInitialData() {
   }
 }
 
-// ─── NAVIGATION ───
 const PAGES = [
   {id:'dashboard',label:'Dashboard',group:'Overview',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',title:'Dashboard'},
   {id:'analyses',label:'My analyses',group:'Medical records',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-5-5z"/><polyline points="14 3 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>',title:'Analysis results'},
@@ -493,7 +471,6 @@ function renderTopbarActions() {
   }
 }
 
-// ─── RENDER ───
 function renderPage() {
   const c = document.getElementById('content');
   c.innerHTML = '';
@@ -512,7 +489,6 @@ function renderPage() {
   if(currentPage==='analyses') initAnalyses();
 }
 
-// ─── DASHBOARD ───
 function renderDashboard() {
   const score = 74;
   const r = 42, circ = 2*Math.PI*r;
@@ -525,7 +501,6 @@ function renderDashboard() {
   ];
   return `
   <div style="display:flex;gap:18px;margin-bottom:18px;align-items:flex-start">
-    <!-- Health score -->
     <div class="card" style="flex:0 0 270px">
       <div class="card-head"><div><h3>Health score</h3><p>Based on your analyses · AI</p></div></div>
       <div class="card-body">
@@ -551,7 +526,6 @@ function renderDashboard() {
         `).join('')}
       </div>
     </div>
-    <!-- Right -->
     <div style="flex:1;display:flex;flex-direction:column;gap:16px">
       <div class="g4">
         ${[
@@ -610,7 +584,6 @@ function renderDashboard() {
   </div>`;
 }
 
-// ─── ANALYSES ───
 function renderAnalyses() {
   return `
   <div class="g2" style="align-items:flex-start">
@@ -679,7 +652,6 @@ function renderAnalysisDetail() {
     </div>`;
 }
 
-// ─── REFERRALS ───
 function renderReferrals() {
   return `
   <div class="card">
@@ -703,7 +675,6 @@ function renderReferrals() {
   </div>`;
 }
 
-// ─── APPOINTMENTS ───
 function renderAppointments() {
   return `
   <div class="card">
@@ -723,7 +694,6 @@ function renderAppointments() {
   </div>`;
 }
 
-// ─── AI ───
 function renderAI() {
   return `
   <div class="card">
@@ -802,7 +772,6 @@ async function sendMsg() {
   renderMessages();
 }
 
-// ─── PROFILE ───
 function renderProfile() {
   const d = profileData;
   const bmi = (d.weight/(d.height/100)**2).toFixed(1);
@@ -898,7 +867,6 @@ async function saveProfile() {
   }
 }
 
-// ─── MODAL ───
 function openModal() {
   document.getElementById('modal').classList.remove('hidden');
 }
@@ -969,7 +937,6 @@ function submitAppt() {
   });
 }
 
-// ─── INIT ───
 async function initApp() {
   await loadInitialData();
   renderSidebarUser();
