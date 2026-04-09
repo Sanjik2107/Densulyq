@@ -8,6 +8,11 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#0f172a;min-height:100vh}
 .app{display:flex;min-height:100vh}
+body.logged-out .sidebar{display:none}
+body.logged-out .main{margin-left:0}
+body.logged-out .topbar{display:none}
+body.logged-out .content{padding:32px;min-height:100vh;display:flex;align-items:center;justify-content:center}
+body.logged-out .modal-overlay{display:none!important}
 
 .sidebar{width:230px;min-width:230px;background:#0d1f3c;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
 .logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}
@@ -22,8 +27,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .nav-item.active{background:#2563eb;color:#fff;font-weight:500}
 .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.8}
 .nav-item.active svg{opacity:1}
-.sidebar-user{padding:14px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
+.sidebar-user{padding:14px;border-top:1px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;gap:10px}
+.sidebar-user-main{display:flex;align-items:center;gap:10px}
 .avatar{width:34px;height:34px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.sidebar-switch{width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.18);background:#132849;color:#fff;font-size:12px;font-family:inherit;outline:none}
+.sidebar-switch option{color:#0f172a}
+.role-chip{padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:inline-block}
+.role-chip.admin{background:#dbeafe;color:#1d4ed8}
+.role-chip.doctor{background:#ede9fe;color:#7c3aed}
+.role-chip.user{background:#ccfbf1;color:#0f766e}
 
 .main{margin-left:230px;flex:1;display:flex;flex-direction:column}
 .topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
@@ -132,6 +144,49 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:99px}
 
+.admin-layout{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:flex-start}
+.stack{display:flex;flex-direction:column;gap:16px}
+.inline-actions{display:flex;gap:8px;flex-wrap:wrap}
+.inline-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.empty{padding:32px;text-align:center;color:#94a3b8;font-size:13.5px}
+.note{padding:12px 14px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc;font-size:12.5px;color:#475569;line-height:1.6}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f8fafc}
+.kv:last-child{border-bottom:none}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.auth-shell{width:min(980px,100%);display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:stretch}
+.auth-panel{background:linear-gradient(160deg,#0d1f3c,#173867);color:#fff;border-radius:24px;padding:34px;box-shadow:0 18px 50px rgba(13,31,60,.18)}
+.auth-panel h1{font-size:34px;line-height:1.05;letter-spacing:-1px;margin-bottom:14px}
+.auth-panel p{font-size:14px;line-height:1.7;color:rgba(255,255,255,.74)}
+.auth-points{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+.auth-point{padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
+.auth-box{background:#fff;border-radius:24px;padding:28px;border:1px solid #dbe4f0;box-shadow:0 18px 50px rgba(15,23,42,.08)}
+.auth-tabs{display:flex;gap:8px;margin:16px 0 22px}
+.auth-tab{flex:1;padding:12px 14px;border-radius:12px;border:1px solid #dbe4f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:600;cursor:pointer}
+.auth-tab.active{background:#0d1f3c;color:#fff;border-color:#0d1f3c}
+.auth-hint{margin-top:18px;padding:14px 16px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;font-size:12.5px;color:#475569;line-height:1.6}
+.auth-error{margin-bottom:14px;padding:12px 14px;border-radius:12px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:13px}
+.auth-actions{display:flex;gap:10px;align-items:center;margin-top:6px}
+.auth-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.toast-wrap{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:1200}
+.toast{min-width:260px;max-width:340px;padding:12px 14px;border-radius:14px;border:1px solid #dbe4f0;background:#fff;box-shadow:0 14px 34px rgba(15,23,42,.12);font-size:13px;line-height:1.5;color:#0f172a}
+.toast.error{border-color:#fecaca;background:#fff7f7;color:#b91c1c}
+.toast.success{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+
+@media (max-width:1100px){
+  .app{flex-direction:column}
+  .sidebar{position:static;width:100%;min-width:0;height:auto}
+  .main{margin-left:0}
+  .content{padding:16px}
+  .topbar{padding:0 16px}
+  .g2,.g3,.g4,.frow,.admin-layout,.profile-grid,.auth-shell{grid-template-columns:1fr}
+}
+
+@media (max-width:720px){
+  .card-head,.card-body{padding-left:16px;padding-right:16px}
+  .topbar h1{font-size:15px}
+  .msg-bbl{max-width:88%}
+}
+
 .hidden{display:none!important}
 </style>
 </head>
@@ -141,15 +196,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <aside class="sidebar">
   <div class="logo">
     <h2>Den<span>saulyq</span></h2>
-    <p>Patient portal</p>
+    <p>Patient, doctor & admin portal</p>
   </div>
   <nav class="nav" id="nav"></nav>
   <div class="sidebar-user">
-    <div class="avatar" id="sidebar-avatar">AD</div>
-    <div>
-      <div style="font-size:13px;color:#fff;font-weight:500" id="sidebar-name">Patient</div>
-      <div style="font-size:11px;color:#64748b" id="sidebar-role">Patient</div>
+    <div class="sidebar-user-main">
+      <div class="avatar" id="sidebar-avatar">AD</div>
+      <div style="flex:1">
+        <div style="font-size:13px;color:#fff;font-weight:500" id="sidebar-name">Patient</div>
+        <div style="font-size:11px;color:#64748b" id="sidebar-role">Patient</div>
+      </div>
     </div>
+    <button class="sidebar-switch" id="logout-btn" onclick="logout()">Logout</button>
   </div>
 </aside>
 
@@ -158,7 +216,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <h1 id="page-title">Dashboard</h1>
     <div id="topbar-actions"></div>
   </header>
-  <div class="content" id="content"></div>
+  <div class="content" id="content">
+    <div class="card">
+      <div class="card-body">
+        <div class="empty">Loading portal...</div>
+      </div>
+    </div>
+  </div>
 </main>
 
 </div>
@@ -166,22 +230,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
     <div class="modal-hd">
-      <h3>Book appointment</h3>
+      <h3 id="modal-title">Book appointment</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-bd" id="modal-body">
-      <div class="fg"><label>Doctor speciality</label>
+      <div class="fg"><label>Doctor</label>
         <select id="m-doc">
-          <option value="">Select speciality</option>
-          <option>Therapist</option><option>Cardiologist</option><option>Neurologist</option>
-          <option>Endocrinologist</option><option>Gastroenterologist</option><option>Ophthalmologist</option>
-          <option>ENT</option><option>Dermatologist</option><option>Urologist</option><option>Surgeon</option>
+          <option value="">Select doctor</option>
         </select>
       </div>
       <div class="frow">
         <div class="fg"><label>Date</label><input type="date" id="m-date"/></div>
-        <div class="fg"><label>Time</label><input type="time" id="m-time"/></div>
+        <div class="fg"><label>Session time</label><select id="m-time" disabled><option value="">Select doctor and date first</option></select></div>
       </div>
+      <div id="booking-slots-hint" style="font-size:12px;color:#64748b;margin:-4px 0 8px">Choose a doctor and date to see 15-minute sessions from 09:00 to 18:00.</div>
       <div class="fg"><label>Reason</label><textarea id="m-reason" placeholder="Describe your symptoms..."></textarea></div>
     </div>
     <div class="modal-ft">
@@ -192,6 +254,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
+window.__renderBootstrapError = function(message) {
+  var title = document.getElementById('page-title');
+  var actions = document.getElementById('topbar-actions');
+  var content = document.getElementById('content');
+  var safeMessage = String(message || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+  if (title) title.textContent = 'Error';
+  if (actions) actions.innerHTML = '';
+  if (content) {
+    content.innerHTML = '<div class="card"><div class="card-body"><div class="empty" style="padding:40px 20px"><div style="font-size:18px;font-weight:600;color:#0f172a;margin-bottom:8px">Frontend error</div><div style="white-space:pre-wrap">' + safeMessage + '</div></div></div></div>';
+  }
+};
+
+window.addEventListener('error', function(event) {
+  if (event && event.message) {
+    window.__renderBootstrapError(event.message);
+  }
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+  var reason = event && event.reason;
+  var message = reason && reason.message ? reason.message : String(reason || 'Unhandled promise rejection');
+  window.__renderBootstrapError(message);
+});
+</script>
+
+<script>
 const API_BASE = (() => {
   const qsApi = new URLSearchParams(window.location.search).get('api');
   if (qsApi) return qsApi.replace(/\/$/, '');
@@ -200,70 +293,51 @@ const API_BASE = (() => {
   }
   return 'http://localhost:8000';
 })();
-const USER_ID = 1;
 
-let USER = {name:'Alibek Dzhaksybekov',initials:'AD',dob:'15.03.1990',iin:'900315300123',blood:'II+',phone:'+7 700 123 45 67',email:'alibek@email.com',address:'Almaty, Abay st. 14, apt. 22',height:178,weight:82};
+const AUTH_STORAGE_KEY = 'densaulyq-auth-v2';
+const DEFAULT_USER = {
+  id: 1,
+  name: 'Patient',
+  username: '',
+  initials: 'PT',
+  dob: '—',
+  iin: '—',
+  blood: '—',
+  phone: '—',
+  email: '—',
+  address: '—',
+  height: '',
+  weight: '',
+  role: 'user',
+  department: '',
+  is_active: true,
+};
 
-let ANALYSES = [
-  {id:1,name:'Complete blood count',date:'12.03.2025',doctor:'Ivanova N.S.',status:'ready',results:[
-    {param:'Hemoglobin',val:145,unit:'g/L',norm:'120–160',ok:true},
-    {param:'Erythrocytes',val:4.8,unit:'×10¹²/L',norm:'4.0–5.5',ok:true},
-    {param:'Leukocytes',val:9.1,unit:'×10⁹/L',norm:'4.0–9.0',ok:false},
-    {param:'Platelets',val:210,unit:'×10⁹/L',norm:'150–400',ok:true},
-  ]},
-  {id:2,name:'Blood biochemistry',date:'12.03.2025',doctor:'Ivanova N.S.',status:'ready',results:[
-    {param:'Glucose',val:5.2,unit:'mmol/L',norm:'3.9–6.1',ok:true},
-    {param:'Cholesterol',val:5.8,unit:'mmol/L',norm:'< 5.2',ok:false},
-    {param:'ALT',val:28,unit:'U/L',norm:'< 40',ok:true},
-    {param:'AST',val:24,unit:'U/L',norm:'< 40',ok:true},
-    {param:'Bilirubin',val:12,unit:'µmol/L',norm:'< 20.5',ok:true},
-  ]},
-  {id:3,name:'Urinalysis',date:'01.02.2025',doctor:'Petrov A.I.',status:'ready',results:[
-    {param:'Protein',val:'Not detected',unit:'',norm:'Not detected',ok:true},
-    {param:'Glucose',val:'Not detected',unit:'',norm:'Not detected',ok:true},
-  ]},
-  {id:4,name:'ECG',date:'15.04.2025',doctor:'Karpova V.M.',status:'processing',results:[]},
+const USER_PAGES = [
+  {id:'dashboard',label:'Dashboard',group:'Overview',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',title:'Dashboard'},
+  {id:'analyses',label:'My analyses',group:'Medical records',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-5-5z"/><polyline points="14 3 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>',title:'Analysis results'},
+  {id:'referrals',label:'Referrals',group:'Medical records',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',title:'Referrals'},
+  {id:'appointments',label:'Appointments',group:'Visits',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',title:'Appointments'},
+  {id:'ai',label:'AI Assistant',group:'AI',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',title:'AI Assistant'},
+  {id:'profile',label:'My profile',group:'Account',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'My profile'},
 ];
 
-let APPOINTMENTS = [
-  {id:1,doctor:'Smirnov D.A.',spec:'Cardiologist',day:'18',mon:'Apr',time:'09:30',place:'Room 215',status:'confirmed'},
-  {id:2,doctor:'Ivanova N.S.',spec:'Therapist',day:'25',mon:'Apr',time:'14:00',place:'Room 105',status:'confirmed'},
-  {id:3,doctor:'Akhmetov B.K.',spec:'Neurologist',day:'02',mon:'May',time:'11:15',place:'Room 318',status:'pending'},
+const ADMIN_PAGES = [
+  {id:'dashboard',label:'Dashboard',group:'Overview',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',title:'Admin dashboard'},
+  {id:'admin',label:'Admin panel',group:'Management',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M12 4h9"/><path d="M4 9h16"/><path d="M4 15h16"/><path d="M6 4v16"/></svg>',title:'Admin panel'},
+  {id:'profile',label:'My profile',group:'Account',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'My profile'},
 ];
 
-let REFERRALS = [
-  {id:1,name:'Complete blood count',from:'Ivanova N.S.',date:'10.04.2025',deadline:'30.04.2025',status:'active'},
-  {id:2,name:'Abdominal ultrasound',from:'Karpova V.M.',date:'05.04.2025',deadline:'05.05.2025',status:'active'},
-  {id:3,name:'Cardiologist consultation',from:'Ivanova N.S.',date:'01.03.2025',deadline:'01.04.2025',status:'completed'},
+const DOCTOR_PAGES = [
+  {id:'dashboard',label:'Dashboard',group:'Overview',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',title:'Doctor dashboard'},
+  {id:'patients',label:'Patients',group:'Clinical',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',title:'Patients'},
+  {id:'profile',label:'My profile',group:'Account',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'My profile'},
 ];
-
-function getInitials(fullName) {
-  if(!fullName) return 'PT';
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if(parts.length === 1) return parts[0].slice(0,2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
-function monthShort(isoDate) {
-  if(!isoDate) return '---';
-  const [y,m,d] = isoDate.split('-');
-  if(!y || !m || !d) return '---';
-  const dt = new Date(`${y}-${m}-${d}T00:00:00`);
-  return dt.toLocaleDateString('ru-RU', {month:'short'}).replace('.', '');
-}
-
-function normalizeDate(backendDate) {
-  if(!backendDate) return '';
-  const parts = backendDate.split('.');
-  if(parts.length === 3) {
-    const [dd,mm,yyyy] = parts;
-    return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
-  }
-  return backendDate;
-}
 
 const I18N_MAP = {
   'готово': 'ready',
+  'назначен': 'ordered',
+  'проверено': 'reviewed',
   'в обработке': 'processing',
   'ожидание': 'pending',
   'подтверждено': 'confirmed',
@@ -286,6 +360,7 @@ const I18N_MAP = {
   'ЭКГ': 'ECG',
   'УЗИ брюшной полости': 'Abdominal ultrasound',
   'Консультация кардиолога': 'Cardiologist consultation',
+  'Холестерин общий': 'Total cholesterol',
   'Гемоглобин': 'Hemoglobin',
   'Эритроциты': 'Erythrocytes',
   'Лейкоциты': 'Leukocytes',
@@ -305,6 +380,190 @@ const I18N_MAP = {
   '×10⁹/л': '×10⁹/L',
 };
 
+function getStoredAuthState() {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return {
+      token: parsed && typeof parsed.token === 'string' ? parsed.token : '',
+      portal: parsed && typeof parsed.portal === 'string' ? parsed.portal : 'patient',
+      page: parsed && typeof parsed.page === 'string' ? parsed.page : '',
+    };
+  } catch (error) {
+    return {token:'', portal:'patient', page:''};
+  }
+}
+
+function setStoredAuthState(state) {
+  try {
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    return;
+  }
+}
+
+function clearStoredAuthState() {
+  try {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (error) {
+    return;
+  }
+}
+
+function getInputElement(id) {
+  return document.getElementById(id);
+}
+
+function getInputValue(id, trim) {
+  const element = getInputElement(id);
+  if (!element) return '';
+  const value = element.value || '';
+  return trim ? value.trim() : value;
+}
+
+function pick(obj, key, fallback) {
+  if (obj && obj[key] !== undefined && obj[key] !== null) {
+    return obj[key];
+  }
+  return fallback;
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function h(value, fallback) {
+  const text = value === undefined || value === null || value === '' ? (fallback || '') : value;
+  return escapeHtml(text);
+}
+
+function showToast(message, type) {
+  let host = document.getElementById('toast-wrap');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toast-wrap';
+    host.className = 'toast-wrap';
+    document.body.appendChild(host);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'error');
+  toast.textContent = String(message || '');
+  host.appendChild(toast);
+  window.setTimeout(() => {
+    toast.remove();
+    if (!host.children.length) host.remove();
+  }, 3200);
+}
+
+function getDefaultChatMessages() {
+  return [
+    {role:'ai', text:'Hello! I am your medical AI assistant.\n\nI can:\n• Analyze your test results\n• Suggest which doctor to visit\n• Answer medical questions\n\nHow can I help you today?'}
+  ];
+}
+
+let AUTH_STATE = getStoredAuthState();
+let AUTH_MODE = AUTH_STATE.portal || 'patient';
+let AUTH_VIEW = 'login';
+let AUTH_ERROR = '';
+let ACTIVE_CONTEXT = {user:null, permissions:[], portal:'patient'};
+let USER = Object.assign({}, DEFAULT_USER);
+let ANALYSES = [];
+let APPOINTMENTS = [];
+let REFERRALS = [];
+let DOCTORS = [];
+let ADMIN_USERS = [];
+let ADMIN_STATS = {total_users: 0, admins: 0, doctors: 0, users: 0, active_users: 0};
+let ADMIN_ANALYSES = [];
+let DOCTOR_PATIENTS = [];
+let DOCTOR_STATS = {total_patients: 0, ready_analyses: 0, active_referrals: 0, appointments: 0};
+let DOCTOR_ACTIVE_PATIENT_ID = null;
+let DOCTOR_ACTIVE_PATIENT = null;
+let DOCTOR_ACTIVE_ANALYSES = [];
+let DOCTOR_ACTIVE_APPOINTMENTS = [];
+let DOCTOR_ACTIVE_REFERRALS = [];
+let RB_MODEL = [];
+let currentPage = 'dashboard';
+let selectedAnalysis = null;
+let chatMessages = getDefaultChatMessages();
+let aiLoading = false;
+let profileEditing = false;
+let profileData = Object.assign({}, USER);
+let MODAL_MODE = 'appointment';
+let PASSWORD_RESET_USER_ID = null;
+let ACTIVE_ANALYSIS_MODAL_ID = null;
+let BOOKING_SLOTS = [];
+let BOOKING_LOADING = false;
+let BOOKING_FETCH_TOKEN = 0;
+const ANALYSIS_NAME_OPTIONS = [
+  'Complete blood count',
+  'Blood biochemistry',
+  'Urinalysis',
+  'ECG',
+  'Thyroid panel',
+  'Lipid panel',
+  'Liver panel',
+  'Vitamin D',
+];
+
+function persistCurrentPage() {
+  if (!AUTH_STATE.token) return;
+  AUTH_STATE = Object.assign({}, AUTH_STATE, {page: currentPage});
+  setStoredAuthState(AUTH_STATE);
+}
+
+function isAuthenticated() {
+  return !!AUTH_STATE.token;
+}
+
+function isAdmin() {
+  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'admin');
+}
+
+function isDoctor() {
+  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'doctor');
+}
+
+function isPatient() {
+  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'user');
+}
+
+function getPages() {
+  if (isAdmin()) return ADMIN_PAGES;
+  if (isDoctor()) return DOCTOR_PAGES;
+  return USER_PAGES;
+}
+
+function getDefaultPageForRole(role) {
+  return role === 'admin' ? 'admin' : 'dashboard';
+}
+
+function formatRole(role) {
+  if (role === 'admin') return 'Admin';
+  if (role === 'doctor') return 'Doctor';
+  return 'Patient';
+}
+
+function getRoleChip(role) {
+  const roleClass = role === 'admin' ? 'admin' : role === 'doctor' ? 'doctor' : 'user';
+  return '<span class="role-chip ' + roleClass + '">' + formatRole(role) + '</span>';
+}
+
+function getInitials(fullName) {
+  if (!fullName) return 'PT';
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 function t(value) {
   if (value == null) return value;
   let out = String(value);
@@ -314,127 +573,570 @@ function t(value) {
   return out;
 }
 
-async function apiGet(path) {
-  const res = await fetch(`${API_BASE}${path}`);
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+function normalizeDate(rawValue) {
+  if (!rawValue) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) return rawValue;
+  const parts = rawValue.split('.');
+  if (parts.length === 3) {
+    const dd = parts[0];
+    const mm = parts[1];
+    const yyyy = parts[2];
+    return yyyy + '-' + mm.padStart(2, '0') + '-' + dd.padStart(2, '0');
+  }
+  return rawValue;
 }
 
-async function apiPost(path, payload) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
+function monthShort(isoDate) {
+  if (!isoDate) return '---';
+  const date = new Date(isoDate + 'T00:00:00');
+  if (Number.isNaN(date.getTime())) return '---';
+  return date.toLocaleDateString('ru-RU', {month:'short'}).replace('.', '');
+}
+
+function getAnalysisDisplayDate(item) {
+  return normalizeDate(item.ready_at || item.scheduled_for || item.date || item.ordered_at || '');
+}
+
+function formatDateInputValue(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function getLocalDateIso(offsetDays) {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + (offsetDays || 0));
+  return formatDateInputValue(date);
+}
+
+function getDefaultBookingDate() {
+  const now = new Date();
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  return getLocalDateIso(minutes >= (17 * 60 + 45) ? 1 : 0);
+}
+
+function buildUrl(path, params) {
+  const url = new URL(API_BASE + path);
+  const safeParams = params || {};
+  Object.entries(safeParams).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      url.searchParams.set(key, value);
+    }
   });
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  return url.toString();
 }
 
-async function apiPut(path, payload) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
+async function requestJson(path, options) {
+  const opts = options || {};
+  const headers = {'Content-Type': 'application/json'};
+  if (!opts.skipAuth && AUTH_STATE.token) {
+    headers.Authorization = 'Bearer ' + AUTH_STATE.token;
+  }
+  const response = await fetch(buildUrl(path, opts.params), {
+    method: opts.method || 'GET',
+    headers,
+    body: opts.payload ? JSON.stringify(opts.payload) : undefined,
   });
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function loadInitialData() {
+  const text = await response.text();
+  let data = {};
   try {
-    const [user, analyses, appointments, referrals] = await Promise.all([
-      apiGet(`/user/${USER_ID}`),
-      apiGet(`/analyses/${USER_ID}`),
-      apiGet(`/appointments/${USER_ID}`),
-      apiGet(`/referrals/${USER_ID}`),
-    ]);
+    data = text ? JSON.parse(text) : {};
+  } catch (error) {
+    data = {detail: text};
+  }
+  if (!response.ok) {
+    if (response.status === 401 && !opts.skipAuth) {
+      clearStoredAuthState();
+      AUTH_STATE = {token:'', portal:'patient', page:''};
+      AUTH_MODE = 'patient';
+      AUTH_VIEW = 'login';
+      AUTH_ERROR = data.detail || 'Сессия истекла. Войдите снова.';
+      resetRuntimeState();
+      closeModal();
+      renderAuthScreen();
+      throw new Error(AUTH_ERROR);
+    }
+    throw new Error(data.detail || ('HTTP ' + response.status));
+  }
+  return data;
+}
 
-    USER = {
-      name: user.name || USER.name,
-      initials: getInitials(user.name || USER.name),
-      dob: user.dob || USER.dob,
-      iin: user.iin || USER.iin,
-      blood: user.blood_type || USER.blood,
-      phone: user.phone || USER.phone,
-      email: user.email || USER.email,
-      address: user.address || USER.address,
-      height: user.height ?? USER.height,
-      weight: user.weight ?? USER.weight
-    };
+function apiGet(path, params, skipAuth) {
+  return requestJson(path, {method:'GET', params, skipAuth});
+}
 
-    ANALYSES = (analyses || []).map(a => ({
-      id: a.id,
-      name: t(a.name),
-      date: a.date,
-      doctor: t(a.doctor),
-      status: t(a.status || ''),
-      results: (a.results || []).map(r => ({
-        ...r,
-        param: t(r.param),
-        unit: t(r.unit),
-        norm: t(r.norm),
-        val: t(r.val)
-      }))
-    }));
+function apiPost(path, payload, params, skipAuth) {
+  return requestJson(path, {method:'POST', payload, params, skipAuth});
+}
 
-    APPOINTMENTS = (appointments || []).map(a => {
-      const iso = normalizeDate(a.date);
-      const day = iso ? iso.split('-')[2] : '--';
-      return {
-        id: a.id,
-        doctor: t(a.doctor),
-        spec: t(a.speciality || a.doctor),
-        day,
-        mon: monthShort(iso),
-        time: a.time || '--:--',
-        place: t(a.place || 'TBD'),
-        status: t(a.status || 'pending'),
-        dateISO: iso
-      };
-    });
+function apiPut(path, payload, params, skipAuth) {
+  return requestJson(path, {method:'PUT', payload, params, skipAuth});
+}
 
-    REFERRALS = (referrals || []).map(r => ({
-      id: r.id,
-      name: t(r.name),
-      from: t(r.from_doctor),
-      date: r.issue_date,
-      deadline: r.deadline,
-      status: t(r.status)
-    }));
+function mapUser(user) {
+  const safeUser = user || {};
+  return {
+    id: pick(safeUser, 'id', DEFAULT_USER.id),
+    name: safeUser.name || DEFAULT_USER.name,
+    username: safeUser.username || '',
+    initials: getInitials(safeUser.name || DEFAULT_USER.name),
+    dob: safeUser.dob || '—',
+    iin: safeUser.iin || '—',
+    blood: safeUser.blood_type || '—',
+    phone: safeUser.phone || '—',
+    email: safeUser.email || '—',
+    address: safeUser.address || '—',
+    height: pick(safeUser, 'height', ''),
+    weight: pick(safeUser, 'weight', ''),
+    role: safeUser.role || 'user',
+    department: safeUser.department || '',
+    is_active: safeUser.is_active !== false,
+  };
+}
 
-    profileData = {...USER};
-  } catch (e) {
-    console.error('Failed to load data from backend:', e);
+function resetRuntimeState() {
+  USER = Object.assign({}, DEFAULT_USER);
+  ACTIVE_CONTEXT = {user:null, permissions:[], portal:'patient'};
+  ANALYSES = [];
+  APPOINTMENTS = [];
+  REFERRALS = [];
+  DOCTORS = [];
+  ADMIN_USERS = [];
+  ADMIN_STATS = {total_users: 0, admins: 0, doctors: 0, users: 0, active_users: 0};
+  ADMIN_ANALYSES = [];
+  DOCTOR_PATIENTS = [];
+  DOCTOR_STATS = {total_patients: 0, ready_analyses: 0, active_referrals: 0, appointments: 0};
+  DOCTOR_ACTIVE_PATIENT_ID = null;
+  DOCTOR_ACTIVE_PATIENT = null;
+  DOCTOR_ACTIVE_ANALYSES = [];
+  DOCTOR_ACTIVE_APPOINTMENTS = [];
+  DOCTOR_ACTIVE_REFERRALS = [];
+  RB_MODEL = [];
+  selectedAnalysis = null;
+  profileEditing = false;
+  profileData = Object.assign({}, USER);
+  chatMessages = getDefaultChatMessages();
+  aiLoading = false;
+  ACTIVE_ANALYSIS_MODAL_ID = null;
+  BOOKING_SLOTS = [];
+  BOOKING_LOADING = false;
+  BOOKING_FETCH_TOKEN = 0;
+  currentPage = 'dashboard';
+}
+
+async function loadSession() {
+  if (!AUTH_STATE.token) return false;
+  try {
+    const session = await apiGet('/auth/me');
+    ACTIVE_CONTEXT = session;
+    USER = mapUser(session.user);
+    profileData = Object.assign({}, USER);
+    AUTH_MODE = session.portal || AUTH_MODE;
+    currentPage = AUTH_STATE.page || getDefaultPageForRole(USER.role);
+    return true;
+  } catch (error) {
+    clearStoredAuthState();
+    AUTH_STATE = {token:'', portal:'patient', page:''};
+    resetRuntimeState();
+    AUTH_ERROR = error.message;
+    return false;
   }
 }
 
-const PAGES = [
-  {id:'dashboard',label:'Dashboard',group:'Overview',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',title:'Dashboard'},
-  {id:'analyses',label:'My analyses',group:'Medical records',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-5-5z"/><polyline points="14 3 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>',title:'Analysis results'},
-  {id:'referrals',label:'Referrals',group:'Medical records',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',title:'Referrals'},
-  {id:'appointments',label:'Appointments',group:'Visits',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',title:'Appointments'},
-  {id:'ai',label:'AI Assistant',group:'AI',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',title:'AI Assistant'},
-  {id:'profile',label:'My profile',group:'Account',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'My profile'},
-];
+function sortByDateDesc(items, key) {
+  return [].concat(items).sort((a, b) => normalizeDate(b[key]).localeCompare(normalizeDate(a[key])));
+}
 
-let currentPage = 'dashboard';
-let selectedAnalysis = null;
-let chatMessages = [
-  {role:'ai',text:'Hello! I am your medical AI assistant 🩺\n\nI can:\n• Analyze your test results\n• Suggest which doctor to visit\n• Answer medical questions\n\nHow can I help you today?'}
-];
-let aiLoading = false;
-let profileEditing = false;
-let profileData = {...USER};
+function sortByDateAsc(items, key) {
+  return [].concat(items).sort((a, b) => normalizeDate(a[key]).localeCompare(normalizeDate(b[key])));
+}
+
+function mapAnalysesList(analyses) {
+  return sortByDateDesc((analyses || []).map(item => ({
+    id: item.id,
+    name: t(item.name),
+    date: getAnalysisDisplayDate(item) || item.date || '—',
+    doctor: t(item.doctor),
+    status: t(item.status || ''),
+    statusRaw: item.status || '',
+    orderedAt: normalizeDate(item.ordered_at || ''),
+    scheduledFor: normalizeDate(item.scheduled_for || ''),
+    readyAt: normalizeDate(item.ready_at || ''),
+    reviewedAt: normalizeDate(item.reviewed_at || ''),
+    doctorNote: t(item.doctor_note || ''),
+    labNote: t(item.lab_note || ''),
+    isVisibleToPatient: item.is_visible_to_patient !== false,
+    patientName: t(item.patient_name || ''),
+    patientUsername: t(item.patient_username || ''),
+    results: (item.results || []).map(result => Object.assign({}, result, {
+      param: t(result.param),
+      unit: t(result.unit),
+      norm: t(result.norm),
+      val: t(result.val),
+    })),
+  })), 'date');
+}
+
+function mapAppointmentsList(appointments) {
+  return sortByDateAsc((appointments || []).map(item => {
+    const iso = normalizeDate(item.date);
+    return {
+      id: item.id,
+      doctor: t(item.doctor),
+      spec: t(item.speciality || item.doctor),
+      day: iso ? iso.split('-')[2] : '--',
+      mon: monthShort(iso),
+      time: item.time || '--:--',
+      place: t(item.place || 'TBD'),
+      status: t(item.status || 'pending'),
+      dateISO: iso,
+    };
+  }), 'dateISO');
+}
+
+function mapReferralsList(referrals) {
+  return sortByDateDesc((referrals || []).map(item => ({
+    id: item.id,
+    name: t(item.name),
+    from: t(item.from_doctor),
+    date: item.issue_date,
+    deadline: item.deadline,
+    status: t(item.status),
+  })), 'date');
+}
+
+async function loadPatientData() {
+  const userId = USER.id;
+  const payload = await Promise.all([
+    apiGet('/user/' + userId),
+    apiGet('/analyses/' + userId),
+    apiGet('/appointments/' + userId),
+    apiGet('/referrals/' + userId),
+    apiGet('/doctors'),
+  ]);
+  const user = payload[0];
+  const analyses = payload[1];
+  const appointments = payload[2];
+  const referrals = payload[3];
+  const doctorsPayload = payload[4];
+
+  USER = mapUser(user);
+  ACTIVE_CONTEXT.user = user;
+  profileData = Object.assign({}, USER);
+  ANALYSES = mapAnalysesList(analyses);
+  APPOINTMENTS = mapAppointmentsList(appointments);
+  REFERRALS = mapReferralsList(referrals);
+  DOCTORS = (doctorsPayload.doctors || []).map(item => ({
+    id: item.id,
+    name: item.name || 'Doctor',
+    department: item.department || '',
+    email: item.email || '',
+    phone: item.phone || '',
+  }));
+  DOCTOR_PATIENTS = [];
+  DOCTOR_ACTIVE_PATIENT_ID = null;
+  DOCTOR_ACTIVE_PATIENT = null;
+  DOCTOR_ACTIVE_ANALYSES = [];
+  DOCTOR_ACTIVE_APPOINTMENTS = [];
+  DOCTOR_ACTIVE_REFERRALS = [];
+}
+
+async function loadAdminData() {
+  const payload = await Promise.all([
+    apiGet('/admin/users'),
+    apiGet('/admin/analyses'),
+    apiGet('/rbac/model'),
+  ]);
+  const adminPayload = payload[0];
+  const analysesPayload = payload[1];
+  const rbacPayload = payload[2];
+  ADMIN_USERS = (adminPayload.users || []).map(mapUser);
+  ADMIN_STATS = adminPayload.stats || ADMIN_STATS;
+  ADMIN_ANALYSES = mapAnalysesList(analysesPayload.analyses || []);
+  RB_MODEL = rbacPayload.roles || [];
+  ANALYSES = [];
+  APPOINTMENTS = [];
+  REFERRALS = [];
+  DOCTORS = [];
+}
+
+async function loadDoctorPatientRecords(patientId) {
+  const payload = await Promise.all([
+    apiGet('/user/' + patientId),
+    apiGet('/analyses/' + patientId),
+    apiGet('/appointments/' + patientId),
+    apiGet('/referrals/' + patientId),
+  ]);
+  DOCTOR_ACTIVE_PATIENT = mapUser(payload[0]);
+  DOCTOR_ACTIVE_ANALYSES = mapAnalysesList(payload[1]);
+  DOCTOR_ACTIVE_APPOINTMENTS = mapAppointmentsList(payload[2]);
+  DOCTOR_ACTIVE_REFERRALS = mapReferralsList(payload[3]);
+}
+
+async function loadDoctorData() {
+  const payload = await apiGet('/doctor/patients');
+  DOCTOR_PATIENTS = (payload.patients || []).map(item => Object.assign(mapUser(item), {
+    ready_analyses: item.ready_analyses || 0,
+    appointment_count: item.appointment_count || 0,
+    active_referrals: item.active_referrals || 0,
+    latest_analysis_date: item.latest_analysis_date || null,
+    next_appointment: item.next_appointment || null,
+  }));
+  DOCTOR_STATS = payload.stats || DOCTOR_STATS;
+  ANALYSES = [];
+  APPOINTMENTS = [];
+  REFERRALS = [];
+  DOCTORS = [];
+  selectedAnalysis = null;
+  if (!DOCTOR_PATIENTS.length) {
+    DOCTOR_ACTIVE_PATIENT_ID = null;
+    DOCTOR_ACTIVE_PATIENT = null;
+    DOCTOR_ACTIVE_ANALYSES = [];
+    DOCTOR_ACTIVE_APPOINTMENTS = [];
+    DOCTOR_ACTIVE_REFERRALS = [];
+    return;
+  }
+  const hasActivePatient = DOCTOR_PATIENTS.some(item => item.id === DOCTOR_ACTIVE_PATIENT_ID);
+  DOCTOR_ACTIVE_PATIENT_ID = hasActivePatient ? DOCTOR_ACTIVE_PATIENT_ID : DOCTOR_PATIENTS[0].id;
+  await loadDoctorPatientRecords(DOCTOR_ACTIVE_PATIENT_ID);
+}
+
+async function loadInitialData() {
+  const hasSession = await loadSession();
+  if (!hasSession) return false;
+  if (isAdmin()) {
+    await loadAdminData();
+  } else if (isDoctor()) {
+    await loadDoctorData();
+  } else {
+    await loadPatientData();
+  }
+  return true;
+}
+
+function ensureValidPage() {
+  if (!getPages().some(page => page.id === currentPage)) {
+    currentPage = getDefaultPageForRole(USER.role);
+  }
+  persistCurrentPage();
+}
+
+function setLoggedOutLayout(isLoggedOut) {
+  document.body.classList.toggle('logged-out', !!isLoggedOut);
+}
+
+function renderAuthScreen() {
+  const isRegister = AUTH_VIEW === 'register';
+  setLoggedOutLayout(true);
+  document.getElementById('page-title').textContent = isRegister ? 'Register' : 'Login';
+  document.getElementById('topbar-actions').innerHTML = '';
+  document.getElementById('content').innerHTML = `
+    <div class="auth-shell">
+      <div class="auth-panel">
+        <div class="auth-badge">${isRegister ? 'Patient registration' : 'Unified access'}</div>
+        <h1>Densaulyq Portal</h1>
+        <p>Один логин для всех ролей. После входа система сама определяет, открыть patient portal, doctor dashboard или admin panel.</p>
+        <div class="auth-points">
+          <div class="auth-point">
+            <strong style="display:block;margin-bottom:6px">Patient demo</strong>
+            <span>username: <code>patient-demo</code><br/>password: <code>patient123</code></span>
+          </div>
+          <div class="auth-point">
+            <strong style="display:block;margin-bottom:6px">Doctor demo</strong>
+            <span>username: <code>doctor-demo</code><br/>password: <code>doctor123</code></span>
+          </div>
+          <div class="auth-point">
+            <strong style="display:block;margin-bottom:6px">Admin demo</strong>
+            <span>username: <code>admin-demo</code><br/>password: <code>admin123</code></span>
+          </div>
+        </div>
+      </div>
+      <div class="auth-box">
+        <h2 style="font-size:24px;letter-spacing:-.6px">${isRegister ? 'Register' : 'Login'}</h2>
+        <p style="margin-top:8px;color:#64748b;font-size:13.5px">
+          ${isRegister ? 'Создайте patient account. Роли doctor и admin создаются только через админку.' : 'Войдите по username и password. Роль будет определена автоматически.'}
+        </p>
+        ${AUTH_ERROR ? `<div class="auth-error">${h(AUTH_ERROR)}</div>` : ''}
+        ${isRegister ? `
+          <div class="fg">
+            <label>Full name</label>
+            <input id="auth-name" placeholder="Your full name" onkeydown="if(event.key==='Enter')submitRegister()"/>
+          </div>
+          <div class="fg">
+            <label>Username</label>
+            <input id="auth-username" placeholder="Create username" onkeydown="if(event.key==='Enter')submitRegister()"/>
+          </div>
+          <div class="frow">
+            <div class="fg">
+              <label>Password</label>
+              <input id="auth-password" type="password" placeholder="Create password" onkeydown="if(event.key==='Enter')submitRegister()"/>
+            </div>
+            <div class="fg">
+              <label>Confirm password</label>
+              <input id="auth-password-confirm" type="password" placeholder="Repeat password" onkeydown="if(event.key==='Enter')submitRegister()"/>
+            </div>
+          </div>
+          <div class="frow">
+            <div class="fg">
+              <label>Email</label>
+              <input id="auth-email" type="email" placeholder="Optional email" onkeydown="if(event.key==='Enter')submitRegister()"/>
+            </div>
+            <div class="fg">
+              <label>Phone</label>
+              <input id="auth-phone" placeholder="Optional phone" onkeydown="if(event.key==='Enter')submitRegister()"/>
+            </div>
+          </div>
+          <div class="auth-actions">
+            <button class="btn btn-primary" onclick="submitRegister()">Create account</button>
+            <button class="btn btn-secondary" onclick="switchAuthView('login')">Back to login</button>
+          </div>
+        ` : `
+          <div class="fg">
+            <label>Username</label>
+            <input id="auth-username" placeholder="Enter username" onkeydown="if(event.key==='Enter')submitLogin()"/>
+          </div>
+          <div class="fg">
+            <label>Password</label>
+            <input id="auth-password" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')submitLogin()"/>
+          </div>
+          <div class="auth-actions">
+            <button class="btn btn-primary" onclick="submitLogin()">Login</button>
+            <button class="btn btn-secondary" onclick="switchAuthView('register')">Register as patient</button>
+          </div>
+        `}
+        <div class="auth-hint">
+          ${isRegister
+            ? 'Регистрация создаёт аккаунт с ролью user и сразу открывает patient portal.'
+            : 'После обычного логина пользователь с ролью user попадает в patient portal, doctor в doctor dashboard, admin в admin panel.'}
+        </div>
+      </div>
+	  </div>`;
+}
+
+function switchAuthView(view) {
+  AUTH_VIEW = view;
+  AUTH_ERROR = '';
+  renderAuthScreen();
+}
+
+async function submitLogin() {
+  const username = getInputValue('auth-username', true);
+  const password = getInputValue('auth-password', false);
+  if (!username || !password) {
+    AUTH_ERROR = 'Введите username и пароль.';
+    renderAuthScreen();
+    return;
+  }
+  try {
+    const data = await apiPost('/auth/login', {username, password}, null, true);
+    AUTH_STATE = {token: data.token, portal: data.portal, page: getDefaultPageForRole(data.user ? data.user.role : 'user')};
+    AUTH_MODE = data.portal || AUTH_MODE;
+    AUTH_VIEW = 'login';
+    setStoredAuthState(AUTH_STATE);
+    AUTH_ERROR = '';
+    currentPage = AUTH_STATE.page;
+    chatMessages = getDefaultChatMessages();
+    await initApp();
+  } catch (error) {
+    AUTH_ERROR = error.message;
+    renderAuthScreen();
+  }
+}
+
+async function submitRegister() {
+  const name = getInputValue('auth-name', true);
+  const username = getInputValue('auth-username', true);
+  const password = getInputValue('auth-password', false);
+  const confirmPassword = getInputValue('auth-password-confirm', false);
+  const email = getInputValue('auth-email', true);
+  const phone = getInputValue('auth-phone', true);
+
+  if (!name || !username || !password || !confirmPassword) {
+    AUTH_ERROR = 'Заполните имя, username и пароль.';
+    renderAuthScreen();
+    return;
+  }
+  if (password !== confirmPassword) {
+    AUTH_ERROR = 'Пароли не совпадают.';
+    renderAuthScreen();
+    return;
+  }
+  if (password.length < 6) {
+    AUTH_ERROR = 'Пароль должен содержать минимум 6 символов.';
+    renderAuthScreen();
+    return;
+  }
+
+  try {
+    const data = await apiPost('/auth/register', {
+      name,
+      username,
+      password,
+      email: email || null,
+      phone: phone || null,
+    }, null, true);
+    AUTH_STATE = {token: data.token, portal: data.portal, page: getDefaultPageForRole('user')};
+    AUTH_MODE = 'patient';
+    AUTH_VIEW = 'login';
+    setStoredAuthState(AUTH_STATE);
+    AUTH_ERROR = '';
+    currentPage = AUTH_STATE.page;
+    chatMessages = getDefaultChatMessages();
+    await initApp();
+  } catch (error) {
+    AUTH_ERROR = error.message;
+    renderAuthScreen();
+  }
+}
+
+async function logout() {
+  try {
+    if (AUTH_STATE.token) {
+      await apiPost('/auth/logout', null);
+    }
+  } catch (error) {
+  }
+  clearStoredAuthState();
+  AUTH_STATE = {token:'', portal:'patient', page:''};
+  AUTH_MODE = 'patient';
+  AUTH_VIEW = 'login';
+  AUTH_ERROR = '';
+  resetRuntimeState();
+  closeModal();
+  renderAuthScreen();
+}
+
+async function logoutAllSessions() {
+  try {
+    if (AUTH_STATE.token) {
+      await apiPost('/auth/logout-all', null);
+    }
+  } catch (error) {
+  }
+  clearStoredAuthState();
+  AUTH_STATE = {token:'', portal:'patient', page:''};
+  AUTH_MODE = 'patient';
+  AUTH_VIEW = 'login';
+  AUTH_ERROR = '';
+  resetRuntimeState();
+  closeModal();
+  renderAuthScreen();
+  showToast('All sessions ended. Login again.', 'success');
+}
 
 function buildNav() {
-  const groups = [...new Set(PAGES.map(p => p.group))];
+  const pages = getPages();
+  const groups = [...new Set(pages.map(page => page.group))];
   const nav = document.getElementById('nav');
-  nav.innerHTML = groups.map(g => `
+  nav.innerHTML = groups.map(group => `
     <div class="nav-group">
-      <div class="nav-group-label">${g}</div>
-      ${PAGES.filter(p=>p.group===g).map(p=>`
-        <div class="nav-item ${p.id===currentPage?'active':''}" onclick="navigate('${p.id}')" id="nav-${p.id}">
-          ${p.icon} ${p.label}
+      <div class="nav-group-label">${group}</div>
+      ${pages.filter(page => page.group === group).map(page => `
+        <div class="nav-item ${page.id === currentPage ? 'active' : ''}" onclick="navigate('${page.id}')" id="nav-${page.id}">
+          ${page.icon} ${page.label}
         </div>
       `).join('')}
     </div>
@@ -444,17 +1146,23 @@ function buildNav() {
 function renderSidebarUser() {
   const avatarEl = document.getElementById('sidebar-avatar');
   const nameEl = document.getElementById('sidebar-name');
+  const roleEl = document.getElementById('sidebar-role');
+  const logoutBtn = document.getElementById('logout-btn');
   if (avatarEl) avatarEl.textContent = USER.initials || 'PT';
-  if (nameEl) {
-    const first = (USER.name || 'Patient').split(/\s+/).filter(Boolean).slice(0, 2).join(' ');
-    nameEl.textContent = first || 'Patient';
+  if (nameEl) nameEl.textContent = USER.name || 'Patient';
+  if (roleEl) {
+    roleEl.textContent = formatRole(USER.role) + (USER.department ? ' · ' + USER.department : '');
+  }
+  if (logoutBtn) {
+    logoutBtn.textContent = 'Logout';
   }
 }
 
 function navigate(id) {
   currentPage = id;
-  const pg = PAGES.find(p=>p.id===id);
-  document.getElementById('page-title').textContent = pg.title;
+  ensureValidPage();
+  const page = getPages().find(item => item.id === currentPage) || getPages()[0];
+  document.getElementById('page-title').textContent = page.title;
   buildNav();
   renderTopbarActions();
   renderPage();
@@ -462,96 +1170,164 @@ function navigate(id) {
 
 function renderTopbarActions() {
   const el = document.getElementById('topbar-actions');
-  if(currentPage==='appointments') {
-    el.innerHTML = `<button class="btn btn-primary" onclick="openModal()">+ Book appointment</button>`;
-  } else if(currentPage==='dashboard') {
-    el.innerHTML = `<button class="btn btn-primary" onclick="navigate('ai')">✨ Ask AI</button>`;
+  if (isPatient() && currentPage === 'appointments') {
+    el.innerHTML = '<button class="btn btn-primary" onclick="openModal()">+ Book appointment</button>';
+  } else if (isPatient() && currentPage === 'dashboard') {
+    el.innerHTML = '<button class="btn btn-primary" onclick="navigate(\'ai\')">Ask AI</button>';
+  } else if (isAdmin() && currentPage === 'admin') {
+    el.innerHTML = '<button class="btn btn-primary" onclick="scrollToCreateUser()">+ New user</button>';
+  } else if (isDoctor() && (currentPage === 'dashboard' || currentPage === 'patients')) {
+    el.innerHTML = '<button class="btn btn-secondary" onclick="refreshDoctorData()">Refresh patients</button>';
   } else {
     el.innerHTML = '';
   }
 }
 
 function renderPage() {
-  const c = document.getElementById('content');
-  c.innerHTML = '';
-  const div = document.createElement('div');
-  div.className = 'page';
-  switch(currentPage) {
-    case 'dashboard': div.innerHTML = renderDashboard(); break;
-    case 'analyses': div.innerHTML = renderAnalyses(); break;
-    case 'referrals': div.innerHTML = renderReferrals(); break;
-    case 'appointments': div.innerHTML = renderAppointments(); break;
-    case 'ai': div.innerHTML = renderAI(); break;
-    case 'profile': div.innerHTML = renderProfile(); break;
+  if (!isAuthenticated()) {
+    renderAuthScreen();
+    return;
   }
-  c.appendChild(div);
-  if(currentPage==='ai') initChat();
-  if(currentPage==='analyses') initAnalyses();
+  setLoggedOutLayout(false);
+  persistCurrentPage();
+  const container = document.getElementById('content');
+  container.innerHTML = '';
+  const page = document.createElement('div');
+  page.className = 'page';
+  switch (currentPage) {
+    case 'dashboard':
+      if (isAdmin()) {
+        page.innerHTML = renderAdminDashboard();
+      } else if (isDoctor()) {
+        page.innerHTML = renderDoctorDashboard();
+      } else {
+        page.innerHTML = renderUserDashboard();
+      }
+      break;
+    case 'patients':
+      page.innerHTML = renderDoctorPatients();
+      break;
+    case 'analyses':
+      page.innerHTML = renderAnalyses();
+      break;
+    case 'referrals':
+      page.innerHTML = renderReferrals();
+      break;
+    case 'appointments':
+      page.innerHTML = renderAppointments();
+      break;
+    case 'ai':
+      page.innerHTML = renderAI();
+      break;
+    case 'admin':
+      page.innerHTML = renderAdminPanel();
+      break;
+    case 'profile':
+      page.innerHTML = renderProfile();
+      break;
+    default:
+      if (isAdmin()) {
+        page.innerHTML = renderAdminDashboard();
+      } else if (isDoctor()) {
+        page.innerHTML = renderDoctorDashboard();
+      } else {
+        page.innerHTML = renderUserDashboard();
+      }
+  }
+  container.appendChild(page);
+  if (currentPage === 'ai' && isPatient()) initChat();
+  if (currentPage === 'analyses') initAnalyses();
 }
 
-function renderDashboard() {
-  const score = 74;
-  const r = 42, circ = 2*Math.PI*r;
+function badgeForStatus(status) {
+  if (['ready', 'reviewed', 'confirmed', 'active'].includes(status)) return 'b-green';
+  if (['processing', 'pending'].includes(status)) return 'b-warn';
+  if (['ordered'].includes(status)) return 'b-gray';
+  if (status === 'inactive') return 'b-red';
+  return 'b-gray';
+}
+
+function getAbnormalCount() {
+  return ANALYSES.reduce((total, analysis) => total + (analysis.results || []).filter(result => result.ok === false).length, 0);
+}
+
+function calculateHealthScore() {
+  const totalResults = ANALYSES.reduce((total, analysis) => total + (analysis.results || []).length, 0);
+  if (!totalResults) return 82;
+  const penalty = Math.round((getAbnormalCount() / totalResults) * 40);
+  return Math.max(55, 92 - penalty);
+}
+
+function renderUserDashboard() {
+  const score = calculateHealthScore();
+  const readyAnalyses = ANALYSES.filter(item => item.status === 'ready' || item.status === 'reviewed').length;
+  const nextAppointment = APPOINTMENTS[0];
+  const activeReferrals = REFERRALS.filter(item => item.status === 'active').length;
+  const latestAnalysis = ANALYSES.length ? ANALYSES[0] : null;
+  const latestReferral = REFERRALS.length ? REFERRALS[0] : null;
+  const scoreBadge = score >= 85 ? 'b-green' : score >= 70 ? 'b-warn' : 'b-red';
+  const scoreStatus = score >= 85 ? 'Excellent' : score >= 70 ? 'Good' : 'Needs attention';
+  const r = 42;
+  const circ = 2 * Math.PI * r;
   const arc = circ * score / 100;
   const indicators = [
-    {label:'Cardiovascular',val:82,color:'#2563eb'},
-    {label:'Metabolism',val:68,color:'#10b981'},
-    {label:'Immunity',val:71,color:'#8b5cf6'},
-    {label:'Overall condition',val:74,color:'#f59e0b'},
+    {label:'Cardiovascular',val:Math.max(58, score - 4),color:'#2563eb'},
+    {label:'Metabolism',val:Math.max(52, score - 8),color:'#10b981'},
+    {label:'Immunity',val:Math.max(55, score - 6),color:'#8b5cf6'},
+    {label:'Overall condition',val:score,color:'#f59e0b'},
   ];
   return `
-  <div style="display:flex;gap:18px;margin-bottom:18px;align-items:flex-start">
+  <div style="display:flex;gap:18px;margin-bottom:18px;align-items:flex-start;flex-wrap:wrap">
     <div class="card" style="flex:0 0 270px">
-      <div class="card-head"><div><h3>Health score</h3><p>Based on your analyses · AI</p></div></div>
+      <div class="card-head"><div><h3>Health score</h3><p>Calculated from completed analyses</p></div></div>
       <div class="card-body">
         <div style="display:flex;align-items:center;gap:18px;margin-bottom:16px">
           <div class="hcircle">
             <svg width="96" height="96" viewBox="0 0 96 96">
               <circle cx="48" cy="48" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="8"/>
-              <circle cx="48" cy="48" r="${r}" fill="none" stroke="#2563eb" stroke-width="8"
-                stroke-dasharray="${arc} ${circ}" stroke-linecap="round"/>
+              <circle cx="48" cy="48" r="${r}" fill="none" stroke="#2563eb" stroke-width="8" stroke-dasharray="${arc} ${circ}" stroke-linecap="round"/>
             </svg>
             <div class="hcircle-txt"><div class="hcircle-num">${score}</div><div class="hcircle-lbl">of 100</div></div>
           </div>
           <div>
-            <span class="badge b-warn" style="margin-bottom:8px">Good</span>
-            <p style="font-size:12.5px;color:#64748b;line-height:1.6">Minor deviations detected. We recommend monitoring cholesterol levels.</p>
+            <span class="badge ${scoreBadge}" style="margin-bottom:8px">${scoreStatus}</span>
+            <p style="font-size:12.5px;color:#64748b;line-height:1.6">${getAbnormalCount() ? 'Minor deviations were found in the latest lab results.' : 'No significant deviations were found in the latest records.'}</p>
           </div>
         </div>
-        ${indicators.map(i=>`
+        ${indicators.map(item => `
           <div class="prog-wrap">
-            <div class="prog-row"><span style="color:#64748b">${i.label}</span><span style="font-weight:500">${i.val}%</span></div>
-            <div class="prog-bar"><div class="prog-fill" style="width:${i.val}%;background:${i.color}"></div></div>
+            <div class="prog-row"><span style="color:#64748b">${item.label}</span><span style="font-weight:500">${item.val}%</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:${item.val}%;background:${item.color}"></div></div>
           </div>
         `).join('')}
       </div>
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;gap:16px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:280px">
       <div class="g4">
         ${[
-          {lbl:'Last visit',val:'12 Mar',sub:'Therapist',ico:'🏥',bg:'#dbeafe',c:'#2563eb'},
-          {lbl:'Referrals',val:'2',sub:'Due by 30 Apr',ico:'📋',bg:'#d1fae5',c:'#059669'},
-          {lbl:'Analyses',val:'4',sub:'3 ready',ico:'🧪',bg:'#ede9fe',c:'#7c3aed'},
-          {lbl:'Appointments',val:'3',sub:'Next on 18 Apr',ico:'📅',bg:'#fef3c7',c:'#d97706'},
-        ].map(s=>`
+          {lbl:'Last analysis',val:h(latestAnalysis ? latestAnalysis.date : '—'),sub:h(latestAnalysis ? latestAnalysis.doctor : 'No records'),ico:'LAB',bg:'#dbeafe',c:'#2563eb'},
+          {lbl:'Referrals',val:h(String(activeReferrals)),sub:h(activeReferrals ? `Due by ${latestReferral ? latestReferral.deadline : 'n/a'}` : 'No active referrals'),ico:'REF',bg:'#d1fae5',c:'#059669'},
+          {lbl:'Analyses',val:h(String(ANALYSES.length)),sub:h(`${readyAnalyses} ready`),ico:'CBC',bg:'#ede9fe',c:'#7c3aed'},
+          {lbl:'Appointments',val:h(String(APPOINTMENTS.length)),sub:h(nextAppointment ? `Next on ${nextAppointment.day} ${nextAppointment.mon}` : 'No upcoming visits'),ico:'VIS',bg:'#fef3c7',c:'#d97706'},
+        ].map(card => `
           <div class="stat">
-            <div class="stat-icon" style="background:${s.bg}">${s.ico}</div>
-            <div class="stat-lbl">${s.lbl}</div>
-            <div class="stat-val" style="color:${s.c}">${s.val}</div>
-            <div class="stat-sub">${s.sub}</div>
+            <div class="stat-icon" style="background:${card.bg};color:${card.c};font-size:12px;font-weight:700">${card.ico}</div>
+            <div class="stat-lbl">${card.lbl}</div>
+            <div class="stat-val" style="color:${card.c}">${card.val}</div>
+            <div class="stat-sub">${card.sub}</div>
           </div>
         `).join('')}
       </div>
       <div class="card">
         <div class="card-head"><div><h3>Upcoming appointments</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('appointments')">All →</button></div>
         <div class="card-body" style="padding-top:10px">
-          ${APPOINTMENTS.slice(0,2).map(a=>`
+          ${APPOINTMENTS.length ? APPOINTMENTS.slice(0,2).map(item => `
             <div class="appt">
-              <div class="appt-date"><div class="appt-day">${a.day}</div><div class="appt-mon">${a.mon}</div></div>
-              <div style="flex:1"><div style="font-size:14px;font-weight:600">${a.doctor}</div><div style="font-size:12px;color:#64748b">${a.spec} · ${a.place}</div></div>
-              <div style="text-align:right"><div style="font-size:14px;font-weight:600">${a.time}</div><span class="badge b-green">${a.status}</span></div>
+              <div class="appt-date"><div class="appt-day">${h(item.day)}</div><div class="appt-mon">${h(item.mon)}</div></div>
+              <div style="flex:1"><div style="font-size:14px;font-weight:600">${h(item.doctor)}</div><div style="font-size:12px;color:#64748b">${h(item.spec)} · ${h(item.place)}</div></div>
+              <div style="text-align:right"><div style="font-size:14px;font-weight:600">${h(item.time)}</div><span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span></div>
             </div>
-          `).join('')}
+          `).join('') : '<div class="empty">No appointments yet.</div>'}
         </div>
       </div>
     </div>
@@ -560,25 +1336,295 @@ function renderDashboard() {
     <div class="card">
       <div class="card-head"><div><h3>Latest analyses</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('analyses')">All →</button></div>
       <div class="card-body" style="padding-top:8px">
-        ${ANALYSES.slice(0,3).map(a=>`
+        ${ANALYSES.length ? ANALYSES.slice(0,3).map(item => `
           <div class="li">
             <div class="li-icon" style="background:#dbeafe">🧪</div>
-            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${a.name}</div><div style="font-size:12px;color:#64748b">${a.date} · ${a.doctor}</div></div>
-            <span class="badge ${a.status==='ready'?'b-green':'b-warn'}">${a.status}</span>
+            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${h(item.name)}</div><div style="font-size:12px;color:#64748b">${h(item.date)} · ${h(item.doctor)}</div></div>
+            <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
           </div>
-        `).join('')}
+        `).join('') : '<div class="empty">No analyses linked to this user yet.</div>'}
       </div>
     </div>
     <div class="card">
       <div class="card-head"><div><h3>Active referrals</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('referrals')">All →</button></div>
       <div class="card-body" style="padding-top:8px">
-        ${REFERRALS.map(r=>`
+        ${REFERRALS.length ? REFERRALS.map(item => `
           <div class="li">
-            <div class="li-icon" style="background:${r.status==='active'?'#d1fae5':'#f1f5f9'}">📋</div>
-            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${r.name}</div><div style="font-size:12px;color:#64748b">from ${r.from} · until ${r.deadline}</div></div>
-            <span class="badge ${r.status==='active'?'b-green':'b-gray'}">${r.status}</span>
+            <div class="li-icon" style="background:${item.status === 'active' ? '#d1fae5' : '#f1f5f9'}">📋</div>
+            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${h(item.name)}</div><div style="font-size:12px;color:#64748b">from ${h(item.from)} · until ${h(item.deadline)}</div></div>
+            <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
+          </div>
+        `).join('') : '<div class="empty">No referrals linked to this user.</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function refreshDoctorData() {
+  try {
+    await loadDoctorData();
+    if (currentPage !== 'patients' && currentPage !== 'dashboard') {
+      currentPage = 'dashboard';
+    }
+    renderTopbarActions();
+    renderPage();
+  } catch (error) {
+    showToast('Failed to refresh doctor data: ' + error.message, 'error');
+  }
+}
+
+async function selectDoctorPatient(patientId) {
+  DOCTOR_ACTIVE_PATIENT_ID = patientId;
+  try {
+    await loadDoctorPatientRecords(patientId);
+    renderPage();
+  } catch (error) {
+    showToast('Failed to load patient details: ' + error.message, 'error');
+  }
+}
+
+function renderDoctorPatientCard() {
+  if (!DOCTOR_ACTIVE_PATIENT) {
+    return `
+    <div class="card">
+      <div class="card-body">
+        <div class="empty">No patients available for this doctor view yet.</div>
+      </div>
+    </div>`;
+  }
+
+  const patient = DOCTOR_ACTIVE_PATIENT;
+  const latestAnalysis = DOCTOR_ACTIVE_ANALYSES[0];
+  const nextAppointment = DOCTOR_ACTIVE_APPOINTMENTS[0];
+
+  return `
+  <div class="stack">
+    <div class="card">
+      <div style="padding:22px;display:flex;align-items:center;gap:18px;border-bottom:1px solid #e2e8f0">
+        <div style="width:62px;height:62px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">${h(patient.initials)}</div>
+        <div>
+          <h2 style="font-size:18px;margin-bottom:6px">${h(patient.name)}</h2>
+          <div class="inline-badges">
+            <span class="badge b-blue">Username: ${h(patient.username || '—')}</span>
+            ${getRoleChip(patient.role)}
+            <span class="badge ${patient.is_active ? 'b-green' : 'b-red'}">${h(patient.is_active ? 'active' : 'inactive')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        ${[
+          ['Phone', h(patient.phone || '—')],
+          ['Email', h(patient.email || '—')],
+          ['Blood type', h(patient.blood || '—')],
+          ['Latest analysis', latestAnalysis ? `${h(latestAnalysis.name)} · ${h(latestAnalysis.date)}` : '—'],
+          ['Next appointment', nextAppointment ? `${h(nextAppointment.day)} ${h(nextAppointment.mon)} · ${h(nextAppointment.time)}` : '—'],
+          ['Active referrals', h(String(DOCTOR_ACTIVE_REFERRALS.filter(item => item.status === 'active').length))],
+        ].map(([key, value]) => `
+          <div class="kv">
+            <span style="font-size:13px;color:#64748b">${key}</span>
+            <span style="font-size:13px;font-weight:500;text-align:right">${value}</span>
           </div>
         `).join('')}
+      </div>
+	    </div>
+	    <div class="card">
+	      <div class="card-head">
+	        <div><h3>Recent analyses</h3><p>Latest lab results for this patient</p></div>
+	        <button class="btn btn-secondary btn-sm" onclick="openDoctorAnalysisCreateModal()">Assign analysis</button>
+	      </div>
+	      <div class="card-body" style="padding-top:10px">
+	        ${DOCTOR_ACTIVE_ANALYSES.length ? DOCTOR_ACTIVE_ANALYSES.slice(0, 4).map(item => `
+	          <div class="li">
+	            <div class="li-icon" style="background:#ede9fe">🧪</div>
+	            <div style="flex:1">
+	              <div style="font-size:13.5px;font-weight:500">${h(item.name)}</div>
+	              <div style="font-size:12px;color:#64748b">${h(item.date)} · ${h(item.doctor)}</div>
+	              ${item.doctorNote ? `<div style="font-size:12px;color:#475569;margin-top:4px">Doctor note: ${h(item.doctorNote)}</div>` : ''}
+	            </div>
+	            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+	              <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
+	              ${(item.status === 'ready' || item.status === 'reviewed') ? `<button class="btn btn-secondary btn-sm" onclick="openDoctorAnalysisReviewModal(${item.id})">Doctor review</button>` : ''}
+	            </div>
+	          </div>
+	        `).join('') : '<div class="empty">No analyses found for this patient.</div>'}
+	      </div>
+	    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-head"><div><h3>Appointments</h3><p>Patient visits</p></div></div>
+        <div class="card-body" style="padding-top:10px">
+          ${DOCTOR_ACTIVE_APPOINTMENTS.length ? DOCTOR_ACTIVE_APPOINTMENTS.slice(0, 4).map(item => `
+            <div class="appt">
+              <div class="appt-date"><div class="appt-day">${h(item.day)}</div><div class="appt-mon">${h(item.mon)}</div></div>
+              <div style="flex:1"><div style="font-size:14px;font-weight:600">${h(item.doctor)}</div><div style="font-size:12px;color:#64748b">${h(item.spec)} · ${h(item.place)}</div></div>
+              <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
+            </div>
+          `).join('') : '<div class="empty">No appointments found.</div>'}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Referrals</h3><p>Open and completed directions</p></div></div>
+        <div class="card-body" style="padding-top:10px">
+          ${DOCTOR_ACTIVE_REFERRALS.length ? DOCTOR_ACTIVE_REFERRALS.slice(0, 4).map(item => `
+            <div class="li">
+              <div class="li-icon" style="background:${item.status === 'active' ? '#d1fae5' : '#f1f5f9'}">📋</div>
+              <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${h(item.name)}</div><div style="font-size:12px;color:#64748b">from ${h(item.from)} · until ${h(item.deadline)}</div></div>
+              <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
+            </div>
+          `).join('') : '<div class="empty">No referrals found.</div>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderDoctorDashboard() {
+  const topPatients = DOCTOR_PATIENTS.slice(0, 5);
+  return `
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:18px">
+    ${[
+      {lbl:'Patients',val:DOCTOR_STATS.total_patients || 0,sub:'Visible patient accounts',ico:'PTS',bg:'#ede9fe',c:'#7c3aed'},
+      {lbl:'Ready analyses',val:DOCTOR_STATS.ready_analyses || 0,sub:'Completed lab results',ico:'LAB',bg:'#dbeafe',c:'#2563eb'},
+      {lbl:'Appointments',val:DOCTOR_STATS.appointments || 0,sub:'Scheduled visits',ico:'APT',bg:'#fef3c7',c:'#d97706'},
+      {lbl:'Active referrals',val:DOCTOR_STATS.active_referrals || 0,sub:'Open clinical directions',ico:'REF',bg:'#d1fae5',c:'#059669'},
+    ].map(card => `
+      <div class="stat">
+        <div class="stat-icon" style="background:${card.bg};color:${card.c};font-size:12px;font-weight:700">${card.ico}</div>
+        <div class="stat-lbl">${card.lbl}</div>
+        <div class="stat-val" style="color:${card.c}">${card.val}</div>
+        <div class="stat-sub">${card.sub}</div>
+      </div>
+    `).join('')}
+  </div>
+  <div class="admin-layout">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><div><h3>Patients in focus</h3><p>Quick access to available patient accounts</p></div><button class="btn btn-secondary btn-sm" onclick="navigate('patients')">Open all →</button></div>
+        <div class="card-body" style="padding:0">
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Last analysis</th><th>Appointments</th><th>Ready</th></tr></thead>
+            <tbody>
+              ${topPatients.length ? topPatients.map(item => `
+                <tr onclick="selectDoctorPatient(${item.id});navigate('patients')" style="cursor:pointer">
+                  <td style="font-weight:500">${h(item.name)}</td>
+                  <td style="color:#64748b">${h(item.latest_analysis_date || '—')}</td>
+                  <td style="color:#64748b">${h(item.appointment_count || 0)}</td>
+                  <td><span class="badge b-blue">${item.ready_analyses || 0}</span></td>
+                </tr>
+              `).join('') : '<tr><td colspan="4"><div class="empty">No patient records available.</div></td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Doctor context</h3><p>Authenticated medical staff session</p></div></div>
+        <div class="card-body">
+          <div class="kv"><span style="color:#64748b">Name</span><strong>${h(USER.name)}</strong></div>
+          <div class="kv"><span style="color:#64748b">Username</span><strong>${h(USER.username || '—')}</strong></div>
+          <div class="kv"><span style="color:#64748b">Department</span><strong>${h(USER.department || '—')}</strong></div>
+          <div class="kv"><span style="color:#64748b">Role</span>${getRoleChip(USER.role)}</div>
+        </div>
+      </div>
+    </div>
+    ${renderDoctorPatientCard()}
+  </div>`;
+}
+
+function renderDoctorPatients() {
+  return `
+  <div class="admin-layout">
+    <div class="card">
+      <div class="card-head"><div><h3>Patients</h3><p>Doctor can open patient records from here</p></div></div>
+      <div class="card-body" style="padding:0">
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Contact</th><th>Next visit</th><th>Ready analyses</th></tr></thead>
+          <tbody>
+            ${DOCTOR_PATIENTS.length ? DOCTOR_PATIENTS.map(item => `
+              <tr onclick="selectDoctorPatient(${item.id})" style="cursor:pointer;background:${DOCTOR_ACTIVE_PATIENT_ID === item.id ? '#eff6ff' : 'transparent'}">
+                <td>
+                  <div style="font-weight:600">${h(item.name)}</div>
+                  <div style="font-size:12px;color:#64748b">${h(item.username || '—')}</div>
+                </td>
+                <td style="color:#64748b">${h(item.phone || item.email || '—')}</td>
+                <td style="color:#64748b">${item.next_appointment ? `${h(item.next_appointment.date)} · ${h(item.next_appointment.time)}` : '—'}</td>
+                <td><span class="badge b-blue">${item.ready_analyses || 0}</span></td>
+              </tr>
+            `).join('') : '<tr><td colspan="4"><div class="empty">No patient records available.</div></td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ${renderDoctorPatientCard()}
+  </div>`;
+}
+
+function renderAdminDashboard() {
+  const recentUsers = ADMIN_USERS.slice(0, 6);
+  const adminRole = RB_MODEL.find(item => item.role === 'admin');
+  const adminPermissions = adminRole ? adminRole.permissions : [];
+  return `
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:18px">
+    ${[
+      {lbl:'Total users',val:ADMIN_STATS.total_users || 0,sub:'All accounts in SQLite',ico:'ALL',bg:'#dbeafe',c:'#2563eb'},
+      {lbl:'Admins',val:ADMIN_STATS.admins || 0,sub:'Privileged accounts',ico:'ADM',bg:'#ede9fe',c:'#7c3aed'},
+      {lbl:'Doctors',val:ADMIN_STATS.doctors || 0,sub:'Clinical staff accounts',ico:'DOC',bg:'#f3e8ff',c:'#9333ea'},
+      {lbl:'Patients',val:ADMIN_STATS.users || 0,sub:'Standard portal accounts',ico:'USR',bg:'#d1fae5',c:'#059669'},
+      {lbl:'Active',val:ADMIN_STATS.active_users || 0,sub:'Accounts with access',ico:'ON',bg:'#fef3c7',c:'#d97706'},
+    ].map(card => `
+      <div class="stat">
+        <div class="stat-icon" style="background:${card.bg};color:${card.c};font-size:12px;font-weight:700">${card.ico}</div>
+        <div class="stat-lbl">${card.lbl}</div>
+        <div class="stat-val" style="color:${card.c}">${card.val}</div>
+        <div class="stat-sub">${card.sub}</div>
+      </div>
+    `).join('')}
+  </div>
+  <div class="admin-layout">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><div><h3>Recent accounts</h3><p>Users available in the database</p></div><button class="btn btn-secondary btn-sm" onclick="navigate('admin')">Open panel →</button></div>
+        <div class="card-body" style="padding:0">
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th></tr></thead>
+            <tbody>
+              ${recentUsers.map(item => `
+                <tr>
+                  <td style="font-weight:500">${h(item.name)}</td>
+                  <td style="color:#64748b">${h(item.username || '—')}</td>
+                  <td>${getRoleChip(item.role)}</td>
+                  <td><span class="badge ${item.is_active ? 'b-green' : 'b-red'}">${h(item.is_active ? 'active' : 'inactive')}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Current admin context</h3><p>Authenticated administrator session</p></div></div>
+        <div class="card-body">
+          <div class="kv"><span style="color:#64748b">Name</span><strong>${h(USER.name)}</strong></div>
+          <div class="kv"><span style="color:#64748b">Username</span><strong>${h(USER.username || '—')}</strong></div>
+          <div class="kv"><span style="color:#64748b">Department</span><strong>${h(USER.department || '—')}</strong></div>
+          <div class="kv"><span style="color:#64748b">Role</span>${getRoleChip(USER.role)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><div><h3>RB model</h3><p>Permissions available to the admin role</p></div></div>
+        <div class="card-body">
+          ${adminPermissions.length ? adminPermissions.map(permission => `
+            <div class="kv">
+              <div>
+                <div style="font-size:13px;font-weight:600">${h(permission.permission)}</div>
+                <div style="font-size:12px;color:#64748b">${h(permission.description)}</div>
+              </div>
+            </div>
+          `).join('') : '<div class="empty">No permissions available.</div>'}
+        </div>
+      </div>
+      <div class="note">
+        Здесь используется единый login/password. Система после входа сама открывает patient portal, doctor dashboard или admin panel по роли пользователя.
       </div>
     </div>
   </div>`;
@@ -590,17 +1636,17 @@ function renderAnalyses() {
     <div class="card">
       <div class="card-head"><h3>My analyses</h3></div>
       <div style="padding:6px 0">
-        ${ANALYSES.map(a=>`
-          <div onclick="selectAnalysis(${a.id})" style="padding:13px 22px;cursor:pointer;border-bottom:1px solid #f8fafc;background:${selectedAnalysis?.id===a.id?'#eff6ff':'transparent'};transition:background .1s">
+        ${ANALYSES.length ? ANALYSES.map(item => `
+          <div onclick="selectAnalysis(${item.id})" style="padding:13px 22px;cursor:pointer;border-bottom:1px solid #f8fafc;background:${selectedAnalysis && selectedAnalysis.id === item.id ? '#eff6ff' : 'transparent'};transition:background .1s">
             <div style="display:flex;align-items:center;gap:11px">
               <div style="flex:1">
-                <div style="font-size:14px;font-weight:600;margin-bottom:2px">${a.name}</div>
-                <div style="font-size:12px;color:#64748b">${a.date} · ${a.doctor}</div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:2px">${h(item.name)}</div>
+                <div style="font-size:12px;color:#64748b">${h(item.date)} · ${h(item.doctor)}</div>
               </div>
-              <span class="badge ${a.status==='ready'?'b-green':'b-warn'}">${a.status}</span>
+              <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
             </div>
           </div>
-        `).join('')}
+        `).join('') : '<div class="empty">No analyses available for this user.</div>'}
       </div>
     </div>
     <div id="analysis-detail">
@@ -610,44 +1656,60 @@ function renderAnalyses() {
 }
 
 function initAnalyses() {
-  if(selectedAnalysis) renderAnalysisDetail();
+  if (selectedAnalysis) renderAnalysisDetail();
 }
 
 function selectAnalysis(id) {
-  selectedAnalysis = ANALYSES.find(a=>a.id===id);
-  document.querySelectorAll('#content [onclick^="selectAnalysis"]').forEach(el=>{
-    const eid = parseInt(el.getAttribute('onclick').match(/\d+/)[0]);
-    el.style.background = eid===id ? '#eff6ff' : 'transparent';
+  selectedAnalysis = ANALYSES.find(item => item.id === id) || null;
+  document.querySelectorAll('#content [onclick^="selectAnalysis"]').forEach(element => {
+    const match = element.getAttribute('onclick').match(/\d+/);
+    const elementId = match ? Number(match[0]) : null;
+    element.style.background = elementId === id ? '#eff6ff' : 'transparent';
   });
   renderAnalysisDetail();
 }
 
+function clearAnalysisSelection() {
+  selectedAnalysis = null;
+  const detail = document.getElementById('analysis-detail');
+  if (detail) {
+    detail.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#94a3b8;font-size:14px">← Select an analysis</div>';
+  }
+}
+
 function renderAnalysisDetail() {
-  const el = document.getElementById('analysis-detail');
-  if(!el || !selectedAnalysis) return;
-  const a = selectedAnalysis;
-  el.innerHTML = `
+  const detail = document.getElementById('analysis-detail');
+  if (!detail || !selectedAnalysis) return;
+  const analysis = selectedAnalysis;
+  detail.innerHTML = `
     <div class="card">
       <div class="card-head">
-        <div><h3>${a.name}</h3><p>${a.date} · ${a.doctor}</p></div>
-        <button class="btn btn-secondary btn-sm" onclick="selectedAnalysis=null;document.getElementById('analysis-detail').innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:180px;color:#94a3b8;font-size:14px\\'>← Select an analysis</div>'">✕</button>
+        <div><h3>${h(analysis.name)}</h3><p>${h(analysis.date)} · ${h(analysis.doctor)}</p></div>
+        <button class="btn btn-secondary btn-sm" onclick="clearAnalysisSelection()">✕</button>
       </div>
       <div class="card-body" style="padding:8px 0 16px">
-        ${a.results.length ? `
-          <table class="tbl">
+        <div class="kv"><span style="color:#64748b">Status</span><span class="badge ${badgeForStatus(analysis.status)}">${h(analysis.status)}</span></div>
+        ${analysis.orderedAt ? `<div class="kv"><span style="color:#64748b">Ordered</span><span>${h(analysis.orderedAt)}</span></div>` : ''}
+        ${analysis.scheduledFor ? `<div class="kv"><span style="color:#64748b">Scheduled for</span><span>${h(analysis.scheduledFor)}</span></div>` : ''}
+        ${analysis.readyAt ? `<div class="kv"><span style="color:#64748b">Ready at</span><span>${h(analysis.readyAt)}</span></div>` : ''}
+        ${analysis.reviewedAt ? `<div class="kv"><span style="color:#64748b">Reviewed at</span><span>${h(analysis.reviewedAt)}</span></div>` : ''}
+        ${analysis.labNote ? `<div class="note" style="margin:12px 0 0">Lab note: ${h(analysis.labNote)}</div>` : ''}
+        ${analysis.doctorNote ? `<div class="note" style="margin:12px 0 0">Doctor note: ${h(analysis.doctorNote)}</div>` : ''}
+        ${analysis.results.length ? `
+          <table class="tbl" style="margin-top:12px">
             <thead><tr><th>Parameter</th><th>Value</th><th>Normal range</th><th>Status</th></tr></thead>
             <tbody>
-              ${a.results.map(r=>`
+              ${analysis.results.map(result => `
                 <tr>
-                  <td style="font-weight:500">${r.param}</td>
-                  <td style="font-family:monospace">${r.val} ${r.unit}</td>
-                  <td style="color:#64748b">${r.norm}</td>
-                  <td><span class="badge ${r.ok?'b-green':'b-red'}">${r.ok?'normal':'high'}</span></td>
+                  <td style="font-weight:500">${h(result.param)}</td>
+                  <td style="font-family:monospace">${h(result.val)} ${h(result.unit)}</td>
+                  <td style="color:#64748b">${h(result.norm)}</td>
+                  <td><span class="badge ${result.ok ? 'b-green' : 'b-red'}">${result.ok ? 'normal' : 'out of range'}</span></td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
-        ` : `<div style="padding:36px;text-align:center;color:#94a3b8"><div style="font-size:32px;margin-bottom:8px">⏳</div>Results are processing</div>`}
+        ` : '<div class="empty" style="margin-top:12px">Results are not published yet.</div>'}
       </div>
     </div>`;
 }
@@ -660,15 +1722,15 @@ function renderReferrals() {
       <table class="tbl">
         <thead><tr><th>Referral</th><th>Issued by</th><th>Issue date</th><th>Deadline</th><th>Status</th></tr></thead>
         <tbody>
-          ${REFERRALS.map(r=>`
+          ${REFERRALS.length ? REFERRALS.map(item => `
             <tr>
-              <td style="font-weight:500">${r.name}</td>
-              <td style="color:#64748b">${r.from}</td>
-              <td style="color:#64748b">${r.date}</td>
-              <td style="color:#64748b">${r.deadline}</td>
-              <td><span class="badge ${r.status==='active'?'b-green':'b-gray'}">${r.status}</span></td>
+              <td style="font-weight:500">${h(item.name)}</td>
+              <td style="color:#64748b">${h(item.from)}</td>
+              <td style="color:#64748b">${h(item.date)}</td>
+              <td style="color:#64748b">${h(item.deadline)}</td>
+              <td><span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span></td>
             </tr>
-          `).join('')}
+          `).join('') : '<tr><td colspan="5"><div class="empty">No referrals found.</div></td></tr>'}
         </tbody>
       </table>
     </div>
@@ -680,16 +1742,16 @@ function renderAppointments() {
   <div class="card">
     <div class="card-head"><h3>My appointments</h3><p>Upcoming doctor visits</p></div>
     <div class="card-body">
-      ${APPOINTMENTS.map(a=>`
+      ${APPOINTMENTS.length ? APPOINTMENTS.map(item => `
         <div class="appt">
-          <div class="appt-date"><div class="appt-day">${a.day}</div><div class="appt-mon">${a.mon}</div></div>
-          <div style="flex:1"><div style="font-size:14px;font-weight:600">${a.doctor}</div><div style="font-size:12.5px;color:#64748b">${a.spec} · ${a.place}</div></div>
+          <div class="appt-date"><div class="appt-day">${h(item.day)}</div><div class="appt-mon">${h(item.mon)}</div></div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600">${h(item.doctor)}</div><div style="font-size:12.5px;color:#64748b">${h(item.spec)} · ${h(item.place)}</div></div>
           <div style="text-align:right">
-            <div style="font-size:15px;font-weight:700;margin-bottom:4px">${a.time}</div>
-            <span class="badge ${a.status==='confirmed'?'b-green':'b-warn'}">${a.status}</span>
+            <div style="font-size:15px;font-weight:700;margin-bottom:4px">${h(item.time)}</div>
+            <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
           </div>
         </div>
-      `).join('')}
+      `).join('') : '<div class="empty">No appointments yet.</div>'}
     </div>
   </div>`;
 }
@@ -706,13 +1768,12 @@ function renderAI() {
     <div class="chat-wrap">
       <div class="chat-msgs" id="chat-msgs"></div>
       <div class="sugg" id="sugg">
-        <button onclick="setInput('What does high cholesterol mean?')">What does high cholesterol mean?</button>
+        <button onclick="setInput('What does high cholesterol mean?')">High cholesterol</button>
         <button onclick="setInput('Please analyze my test results')">Analyze my test results</button>
         <button onclick="setInput('I have headache and fatigue, which doctor should I visit?')">Headache and fatigue</button>
       </div>
       <div class="chat-input-area">
-        <input class="chat-input" id="chat-input" placeholder="Describe symptoms or ask a question..."
-          onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <input class="chat-input" id="chat-input" placeholder="Describe symptoms or ask a question..." onkeydown="if(event.key==='Enter')sendMsg()"/>
         <button class="send-btn" onclick="sendMsg()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
         </button>
@@ -722,8 +1783,11 @@ function renderAI() {
 }
 
 function setInput(text) {
-  const inp = document.getElementById('chat-input');
-  if(inp) { inp.value = text; inp.focus(); }
+  const input = document.getElementById('chat-input');
+  if (input) {
+    input.value = text;
+    input.focus();
+  }
 }
 
 function initChat() {
@@ -731,12 +1795,12 @@ function initChat() {
 }
 
 function renderMessages() {
-  const el = document.getElementById('chat-msgs');
-  if(!el) return;
-  el.innerHTML = chatMessages.map(m=>`
-    <div class="msg ${m.role}">
-      <div class="msg-av ${m.role}">${m.role==='ai'?'AI':'AD'}</div>
-      <div class="msg-bbl">${m.text}</div>
+  const element = document.getElementById('chat-msgs');
+  if (!element) return;
+  element.innerHTML = chatMessages.map(message => `
+    <div class="msg ${message.role}">
+      <div class="msg-av ${message.role}">${message.role === 'ai' ? 'AI' : h(USER.initials)}</div>
+      <div class="msg-bbl">${h(message.text)}</div>
     </div>
   `).join('') + (aiLoading ? `
     <div class="msg ai">
@@ -744,96 +1808,117 @@ function renderMessages() {
       <div class="msg-bbl"><div class="typing"><span></span><span></span><span></span></div></div>
     </div>
   ` : '');
-  el.scrollTop = el.scrollHeight;
+  element.scrollTop = element.scrollHeight;
 }
 
 async function sendMsg() {
-  const inp = document.getElementById('chat-input');
-  if(!inp || !inp.value.trim() || aiLoading) return;
-  const text = inp.value.trim();
-  inp.value = '';
+  const input = document.getElementById('chat-input');
+  if (!input || !input.value.trim() || aiLoading) return;
+  const text = input.value.trim();
+  input.value = '';
   chatMessages.push({role:'user', text});
   aiLoading = true;
   renderMessages();
-
   let reply = '';
   try {
-    const d = await apiPost('/ai/chat', {
-      user_id: USER_ID,
+    const data = await apiPost('/ai/chat', {
+      user_id: USER.id,
       message: text,
       context: 'You are a medical AI assistant. Reply briefly, clearly, and in English with practical recommendations.'
     });
-    reply = d.reply || 'Could not get a response.';
-  } catch(e) {
-    reply = '⚠️ Connection error: ' + e.message;
+    reply = data.reply || 'Could not get a response.';
+  } catch (error) {
+    reply = 'Connection error: ' + error.message;
   }
   chatMessages.push({role:'ai', text:reply});
   aiLoading = false;
   renderMessages();
 }
 
-function renderProfile() {
-  const d = profileData;
-  const bmi = (d.weight/(d.height/100)**2).toFixed(1);
+function getRoleBasedFieldRows() {
+  const fields = [['Name', 'name'], ['Date of birth', 'dob'], ['Phone', 'phone'], ['Email', 'email'], ['Address', 'address']];
+  if (isAdmin() || isDoctor()) fields.push(['Department', 'department']);
+  return fields;
+}
+
+function getMedicalFieldRows() {
+  return [['IIN', 'iin'], ['Height (cm)', 'height'], ['Weight (kg)', 'weight'], ['Blood type', 'blood']];
+}
+
+function normalizeOptionalText(value) {
+  const text = String(value == null ? '' : value).trim();
+  return text || null;
+}
+
+function renderProfileField(label, key) {
+  const value = pick(profileData, key, '—');
   return `
-  <div class="g2" style="align-items:flex-start">
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">${h(label)}</div>
+      ${profileEditing
+        ? `<input style="width:100%;padding:8px 11px;border:1px solid #e2e8f0;border-radius:7px;font-size:13.5px;font-family:inherit" value="${escapeAttr(value === '—' ? '' : value)}" oninput="profileData['${key}']=this.value"/>`
+        : `<div style="font-size:14px;font-weight:500">${h(value || '—')}</div>`}
+    </div>`;
+}
+
+function safeBmi(height, weight) {
+  const h = Number(height);
+  const w = Number(weight);
+  if (!h || !w) return '—';
+  return (w / ((h / 100) ** 2)).toFixed(1);
+}
+
+function renderProfile() {
+  const bmi = safeBmi(profileData.height, profileData.weight);
+  return `
+  <div class="profile-grid" style="align-items:flex-start">
     <div class="card">
       <div style="padding:22px;display:flex;align-items:center;gap:18px;border-bottom:1px solid #e2e8f0">
-        <div style="width:68px;height:68px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${USER.initials}</div>
+        <div style="width:68px;height:68px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${h(USER.initials)}</div>
         <div>
-          <h2 style="font-size:18px;margin-bottom:6px">${d.name}</h2>
-          <span class="badge b-blue" style="margin-right:6px">IIN: ${d.iin}</span>
-          <span class="badge b-red">Blood type: ${d.blood}</span>
+          <h2 style="font-size:18px;margin-bottom:6px">${h(profileData.name || USER.name)}</h2>
+          <div class="inline-badges">
+            <span class="badge b-blue">Username: ${h(USER.username || '—')}</span>
+            ${getRoleChip(USER.role)}
+            <span class="badge ${USER.is_active ? 'b-green' : 'b-red'}">${h(USER.is_active ? 'active' : 'inactive')}</span>
+          </div>
         </div>
       </div>
       <div class="card-body">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
           <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500">Personal info</div>
-          <button class="btn btn-secondary btn-sm" onclick="toggleEdit()">${profileEditing?'💾 Save':'✏️ Edit'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleEdit()">${profileEditing ? 'Save' : 'Edit'}</button>
         </div>
-        ${[['Date of birth','dob'],['Phone','phone'],['Email','email'],['Address','address']].map(([lbl,key])=>`
-          <div style="margin-bottom:12px">
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">${lbl}</div>
-            ${profileEditing
-              ? `<input class="fg" style="width:100%;padding:8px 11px;border:1px solid #e2e8f0;border-radius:7px;font-size:13.5px;font-family:inherit" value="${d[key]}" oninput="profileData['${key}']=this.value"/>`
-              : `<div style="font-size:14px;font-weight:500">${d[key]}</div>`}
-          </div>
-        `).join('')}
+        ${getRoleBasedFieldRows().map(([label, key]) => renderProfileField(label, key)).join('')}
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="stack">
       <div class="card">
         <div class="card-body">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500;margin-bottom:14px">Medical data</div>
-          ${[
-            ['Height', d.height + ' cm'],
-            ['Weight', d.weight + ' kg'],
-            ['BMI', bmi + ' — Normal'],
-            ['Blood type', d.blood],
-            ['Chronic diseases', 'None'],
-            ['Allergies', 'Penicillin'],
-          ].map(([k,v])=>`
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f8fafc">
-              <span style="font-size:13px;color:#64748b">${k}</span>
-              <span style="font-size:13px;font-weight:500">${v}</span>
-            </div>
-          `).join('')}
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500;margin-bottom:14px">Medical data</div>
+          ${getMedicalFieldRows().map(([label, key]) => renderProfileField(label, key)).join('')}
+          <div class="kv" style="margin-top:4px">
+            <span style="font-size:13px;color:#64748b">BMI</span>
+            <span style="font-size:13px;font-weight:500">${h(bmi === '—' ? '—' : `${bmi} — Normal`)}</span>
+          </div>
         </div>
       </div>
       <div class="card">
         <div class="card-body">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500;margin-bottom:14px">Health indicators</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;font-weight:500;margin-bottom:14px">Account context</div>
           ${[
-            ['Blood pressure','120/80 mmHg','b-green'],
-            ['Pulse','72 bpm','b-green'],
-            ['Temperature','36.6 °C','b-green'],
-            ['Oxygen saturation','98%','b-green'],
-          ].map(([k,v,b])=>`
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f8fafc">
-              <span style="font-size:13px;color:#64748b">${k}</span>
-              <span class="badge ${b}">${v}</span>
+            ['Role', formatRole(USER.role)],
+            ['Department', USER.department || '—'],
+            ['Permissions', (ACTIVE_CONTEXT.permissions || []).join(', ') || '—'],
+          ].map(([key, value]) => `
+            <div class="kv">
+              <span style="font-size:13px;color:#64748b">${key}</span>
+              <span style="font-size:13px;font-weight:500;text-align:right">${h(value)}</span>
             </div>
           `).join('')}
+          <div style="display:flex;justify-content:flex-end;margin-top:14px">
+            <button class="btn btn-secondary btn-sm" onclick="logoutAllSessions()">Logout all sessions</button>
+          </div>
         </div>
       </div>
     </div>
@@ -841,7 +1926,7 @@ function renderProfile() {
 }
 
 function toggleEdit() {
-  if(profileEditing) {
+  if (profileEditing) {
     saveProfile();
     return;
   }
@@ -849,102 +1934,637 @@ function toggleEdit() {
   renderPage();
 }
 
+function toNullableNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
 async function saveProfile() {
+  const payload = {
+    name: normalizeOptionalText(profileData.name) || USER.name,
+    dob: normalizeOptionalText(profileData.dob),
+    phone: normalizeOptionalText(profileData.phone),
+    email: normalizeOptionalText(profileData.email),
+    address: normalizeOptionalText(profileData.address),
+    department: normalizeOptionalText(profileData.department),
+    iin: normalizeOptionalText(profileData.iin),
+    blood_type: normalizeOptionalText(profileData.blood),
+    height: toNullableNumber(profileData.height),
+    weight: toNullableNumber(profileData.weight),
+  };
+  Object.keys(payload).forEach(key => {
+    if (payload[key] === null && ['height', 'weight'].indexOf(key) === -1) delete payload[key];
+  });
   try {
-    await apiPut(`/user/${USER_ID}`, {
-      name: profileData.name,
-      phone: profileData.phone,
-      email: profileData.email,
-      address: profileData.address,
-      height: Number(profileData.height),
-      weight: Number(profileData.weight)
-    });
-    USER = {...profileData, initials:getInitials(profileData.name)};
+    await apiPut('/user/' + USER.id, payload);
     profileEditing = false;
+    await initApp();
+    currentPage = 'profile';
+    persistCurrentPage();
     renderPage();
-  } catch (e) {
-    alert('Failed to save profile: ' + e.message);
+  } catch (error) {
+    showToast('Failed to save profile: ' + error.message, 'error');
   }
 }
 
-function openModal() {
+	function renderAdminPanel() {
+	  return `
+	  <div class="admin-layout">
+	    <div class="stack">
+      <div class="card" id="new-user-form">
+        <div class="card-head"><div><h3>Create new user</h3><p>Create a patient, doctor, or administrator with login and password</p></div></div>
+        <div class="card-body">
+          <div class="frow">
+            <div class="fg"><label>Full name</label><input id="admin-name" placeholder="Aruzhan Sarsenova"/></div>
+            <div class="fg"><label>Username</label><input id="admin-username" placeholder="aruzhan.user"/></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>Password</label><input id="admin-password" type="password" placeholder="Create a password"/></div>
+            <div class="fg"><label>Role</label>
+              <select id="admin-role">
+                <option value="user">Patient</option>
+                <option value="doctor">Doctor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>Email</label><input id="admin-email" placeholder="user@densaulyq.local"/></div>
+            <div class="fg"><label>Phone</label><input id="admin-phone" placeholder="+7 700 000 00 00"/></div>
+          </div>
+          <div class="fg"><label>Department</label><input id="admin-department" placeholder="Patient care"/></div>
+          <div class="inline-actions">
+            <button class="btn btn-primary" onclick="createAdminUser()">Create account</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Users from DB</h3><p>Role and access management</p></div></div>
+        <div class="card-body" style="padding:0">
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${ADMIN_USERS.map(item => `
+                <tr>
+                  <td>
+                    <div style="font-weight:600">${h(item.name)}</div>
+                    <div style="font-size:12px;color:#64748b">${h(item.email || '—')}</div>
+                  </td>
+                  <td style="color:#64748b">${h(item.username || '—')}</td>
+                  <td>${getRoleChip(item.role)}</td>
+                  <td><span class="badge ${item.is_active ? 'b-green' : 'b-red'}">${h(item.is_active ? 'active' : 'inactive')}</span></td>
+                  <td>
+                    <div class="inline-actions">
+                      <select id="role-select-${item.id}" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#fff">
+                        <option value="user" ${item.role === 'user' ? 'selected' : ''}>Patient</option>
+                        <option value="doctor" ${item.role === 'doctor' ? 'selected' : ''}>Doctor</option>
+                        <option value="admin" ${item.role === 'admin' ? 'selected' : ''}>Admin</option>
+                      </select>
+                      <button class="btn btn-secondary btn-sm" onclick="applyUserRole(${item.id})">Apply role</button>
+                      <button class="btn btn-secondary btn-sm" onclick="toggleUserStatus(${item.id}, ${item.is_active ? 'false' : 'true'})">${item.is_active ? 'Deactivate' : 'Activate'}</button>
+                      <button class="btn btn-secondary btn-sm" onclick="resetUserPassword(${item.id})">Reset password</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+	      </div>
+	    </div>
+	    <div class="stack">
+	      <div class="card">
+	        <div class="card-head"><div><h3>Analyses queue</h3><p>Doctor orders, lab processing, and publication</p></div></div>
+	        <div class="card-body" style="padding:0">
+	          <table class="tbl">
+	            <thead><tr><th>Patient</th><th>Analysis</th><th>Status</th><th>Actions</th></tr></thead>
+	            <tbody>
+	              ${ADMIN_ANALYSES.length ? ADMIN_ANALYSES.slice(0, 10).map(item => `
+	                <tr>
+	                  <td>
+	                    <div style="font-weight:600">${h(item.patientName || 'Patient')}</div>
+	                    <div style="font-size:12px;color:#64748b">${h(item.patientUsername || '—')}</div>
+	                  </td>
+	                  <td>
+	                    <div style="font-weight:500">${h(item.name)}</div>
+	                    <div style="font-size:12px;color:#64748b">${h(item.date || '—')} · ${h(item.doctor || '—')}</div>
+	                  </td>
+	                  <td><span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span></td>
+	                  <td><button class="btn btn-secondary btn-sm" onclick="openAdminAnalysisModal(${item.id})">Update</button></td>
+	                </tr>
+	              `).join('') : '<tr><td colspan="4"><div class="empty">No analyses in the queue.</div></td></tr>'}
+	            </tbody>
+	          </table>
+	        </div>
+	      </div>
+	      <div class="card">
+	        <div class="card-head"><div><h3>RB model</h3><p>Role-based permissions exposed by API</p></div></div>
+	        <div class="card-body">
+          ${RB_MODEL.map(role => `
+            <div style="margin-bottom:18px">
+              <div class="inline-badges" style="margin-bottom:10px">
+                ${getRoleChip(role.role)}
+                <span style="font-size:12px;color:#64748b">${role.permissions.length} permissions</span>
+              </div>
+	                  ${role.permissions.map(permission => `
+	                <div class="kv">
+	                  <div>
+	                    <div style="font-size:13px;font-weight:600">${h(permission.permission)}</div>
+	                    <div style="font-size:12px;color:#64748b">${h(permission.description)}</div>
+	                  </div>
+	                </div>
+	              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="note">
+        Пользователь входит через единый <code>username/password</code>. Роль <code>user</code> открывает patient portal, <code>doctor</code> открывает doctor dashboard, <code>admin</code> открывает admin panel.
+      </div>
+    </div>
+  </div>`;
+}
+
+function scrollToCreateUser() {
+  const form = document.getElementById('new-user-form');
+  if (form) form.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function createAdminUser() {
+  const payload = {
+    name: getInputValue('admin-name', true),
+    username: getInputValue('admin-username', true),
+    password: getInputValue('admin-password', false),
+    email: getInputValue('admin-email', true) || null,
+    phone: getInputValue('admin-phone', true) || null,
+    role: getInputValue('admin-role', false) || 'user',
+    department: getInputValue('admin-department', true) || null,
+  };
+  if (!payload.name || !payload.username || !payload.password) {
+    showToast('Name, username and password are required.', 'error');
+    return;
+  }
+  try {
+    await apiPost('/admin/users', payload);
+    await initApp();
+    currentPage = 'admin';
+    renderTopbarActions();
+    renderPage();
+    showToast('User account created.', 'success');
+  } catch (error) {
+    showToast('Failed to create user: ' + error.message, 'error');
+  }
+}
+
+async function applyUserRole(userId) {
+  const nextRole = getInputValue('role-select-' + userId, false);
+  try {
+    await apiPut('/admin/users/' + userId, {role: nextRole});
+    await initApp();
+    currentPage = 'admin';
+    renderTopbarActions();
+    renderPage();
+    showToast('User role updated.', 'success');
+  } catch (error) {
+    showToast('Failed to update role: ' + error.message, 'error');
+  }
+}
+
+async function toggleUserStatus(userId, nextStatus) {
+  try {
+    await apiPut('/admin/users/' + userId, {is_active: nextStatus});
+    await initApp();
+    currentPage = 'admin';
+    renderTopbarActions();
+    renderPage();
+    showToast('User status updated.', 'success');
+  } catch (error) {
+    showToast('Failed to update status: ' + error.message, 'error');
+  }
+}
+
+async function resetUserPassword(userId) {
+  PASSWORD_RESET_USER_ID = userId;
+  renderPasswordResetModalForm();
   document.getElementById('modal').classList.remove('hidden');
 }
-function closeModal() {
-  document.getElementById('modal').classList.add('hidden');
+
+function setModalTitle(title) {
+  const titleEl = document.getElementById('modal-title');
+  if (titleEl) titleEl.textContent = title;
+}
+
+function renderPasswordResetModalForm() {
+  MODAL_MODE = 'password-reset';
+  setModalTitle('Reset password');
   document.getElementById('modal-body').innerHTML = `
-    <div class="fg"><label>Doctor speciality</label>
-      <select id="m-doc">
-        <option value="">Select speciality</option>
-        <option>Therapist</option><option>Cardiologist</option><option>Neurologist</option>
-        <option>Endocrinologist</option><option>Gastroenterologist</option><option>Ophthalmologist</option>
-        <option>ENT</option><option>Dermatologist</option><option>Urologist</option><option>Surgeon</option>
+    <div class="fg"><label>New password</label><input id="reset-password" type="password" placeholder="Enter new password"/></div>
+    <div class="fg"><label>Confirm password</label><input id="reset-password-confirm" type="password" placeholder="Repeat new password"/></div>`;
+  document.querySelector('.modal-ft').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitPasswordReset()">Save</button>`;
+}
+
+async function submitPasswordReset() {
+  const password = getInputValue('reset-password', false);
+  const confirmPassword = getInputValue('reset-password-confirm', false);
+  if (!PASSWORD_RESET_USER_ID) return;
+  if (!password) {
+    showToast('Enter a new password.', 'error');
+    return;
+  }
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters.', 'error');
+    return;
+  }
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match.', 'error');
+    return;
+  }
+  try {
+    await apiPut('/admin/users/' + PASSWORD_RESET_USER_ID, {password});
+    closeModal();
+    showToast('Password updated.', 'success');
+  } catch (error) {
+    showToast('Failed to update password: ' + error.message, 'error');
+  }
+}
+
+function getDoctorActiveAnalysisById(analysisId) {
+  return DOCTOR_ACTIVE_ANALYSES.find(item => item.id === analysisId) || null;
+}
+
+function getAdminAnalysisById(analysisId) {
+  return ADMIN_ANALYSES.find(item => item.id === analysisId) || null;
+}
+
+function formatAnalysisResultsText(results) {
+  return (results || []).map(result => [
+    result.param || '',
+    result.val || '',
+    result.unit || '',
+    result.norm || '',
+    result.ok ? 'ok' : 'abnormal',
+  ].join(' | ')).join('\n');
+}
+
+function parseAnalysisResultsText(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return [];
+  return text.split('\n').map((line, index) => {
+    const parts = line.split('|').map(part => part.trim());
+    if (parts.length < 5) {
+      throw new Error(`Line ${index + 1}: use format Parameter | Value | Unit | Range | ok/abnormal`);
+    }
+    const flag = parts[4].toLowerCase();
+    if (!['ok', 'abnormal', 'high', 'low', 'normal', 'out'].includes(flag)) {
+      throw new Error(`Line ${index + 1}: last value must be ok or abnormal`);
+    }
+    return {
+      param: parts[0],
+      val: parts[1],
+      unit: parts[2],
+      norm: parts[3],
+      ok: ['ok', 'normal'].includes(flag),
+    };
+  });
+}
+
+function renderAnalysisStatusOptions(selectedStatus) {
+  return [
+    ['назначен', 'Ordered'],
+    ['в обработке', 'Processing'],
+    ['готово', 'Ready'],
+  ].map(([value, label]) => `<option value="${value}" ${selectedStatus === value || selectedStatus === t(value) ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function openDoctorAnalysisCreateModal() {
+  if (!DOCTOR_ACTIVE_PATIENT_ID || !DOCTOR_ACTIVE_PATIENT) {
+    showToast('Select a patient first.', 'error');
+    return;
+  }
+  MODAL_MODE = 'doctor-analysis-create';
+  ACTIVE_ANALYSIS_MODAL_ID = null;
+  setModalTitle('Assign analysis');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="fg">
+      <label>Analysis name</label>
+      <input id="doctor-analysis-name" list="analysis-name-options" placeholder="Choose or type analysis name"/>
+      <datalist id="analysis-name-options">
+        ${ANALYSIS_NAME_OPTIONS.map(name => `<option value="${escapeAttr(name)}"></option>`).join('')}
+      </datalist>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Patient</label><input value="${escapeAttr(DOCTOR_ACTIVE_PATIENT.name)}" disabled/></div>
+      <div class="fg"><label>Scheduled date</label><input type="date" id="doctor-analysis-date" min="${getLocalDateIso(0)}"/></div>
+    </div>
+    <div class="fg"><label>Doctor note</label><textarea id="doctor-analysis-note" placeholder="Preparation instructions or clinical note"></textarea></div>
+    <div class="fg"><label><input id="doctor-analysis-visible" type="checkbox" checked style="margin-right:8px"/>Visible to patient immediately</label></div>`;
+  document.querySelector('.modal-ft').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitDoctorAnalysisCreate()">Assign</button>`;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+async function submitDoctorAnalysisCreate() {
+  const analysisName = getInputValue('doctor-analysis-name', true);
+  const scheduledFor = getInputValue('doctor-analysis-date', false) || null;
+  const doctorNote = getInputValue('doctor-analysis-note', true) || null;
+  const visible = !!(document.getElementById('doctor-analysis-visible') || {}).checked;
+  if (!DOCTOR_ACTIVE_PATIENT_ID || !analysisName) {
+    showToast('Enter analysis name.', 'error');
+    return;
+  }
+  try {
+    await apiPost(`/doctor/patients/${DOCTOR_ACTIVE_PATIENT_ID}/analyses`, {
+      name: analysisName,
+      scheduled_for: scheduledFor,
+      doctor_note: doctorNote,
+      is_visible_to_patient: visible,
+    });
+    await loadDoctorData();
+    currentPage = 'patients';
+    renderPage();
+    closeModal();
+    showToast('Analysis assigned.', 'success');
+  } catch (error) {
+    showToast('Failed to assign analysis: ' + error.message, 'error');
+  }
+}
+
+function openDoctorAnalysisReviewModal(analysisId) {
+  const analysis = getDoctorActiveAnalysisById(analysisId);
+  if (!analysis) {
+    showToast('Analysis not found.', 'error');
+    return;
+  }
+  MODAL_MODE = 'doctor-analysis-review';
+  ACTIVE_ANALYSIS_MODAL_ID = analysisId;
+  setModalTitle('Doctor review');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="note" style="margin-bottom:12px">${h(analysis.name)} · ${h(analysis.date)} · ${h(analysis.status)}</div>
+    <div class="fg"><label>Doctor note</label><textarea id="doctor-review-note" placeholder="Clinical interpretation or next step">${h(analysis.doctorNote || '')}</textarea></div>`;
+  document.querySelector('.modal-ft').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitDoctorAnalysisReview()">Save review</button>`;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+async function submitDoctorAnalysisReview() {
+  if (!ACTIVE_ANALYSIS_MODAL_ID) return;
+  try {
+    await apiPut(`/doctor/analyses/${ACTIVE_ANALYSIS_MODAL_ID}/review`, {
+      doctor_note: getInputValue('doctor-review-note', true) || null,
+    });
+    await loadDoctorData();
+    currentPage = 'patients';
+    renderPage();
+    closeModal();
+    showToast('Doctor review saved.', 'success');
+  } catch (error) {
+    showToast('Failed to save doctor review: ' + error.message, 'error');
+  }
+}
+
+function openAdminAnalysisModal(analysisId) {
+  const analysis = getAdminAnalysisById(analysisId);
+  if (!analysis) {
+    showToast('Analysis not found.', 'error');
+    return;
+  }
+  MODAL_MODE = 'admin-analysis-edit';
+  ACTIVE_ANALYSIS_MODAL_ID = analysisId;
+  setModalTitle('Update analysis');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="note" style="margin-bottom:12px">${h(analysis.patientName || 'Patient')} · ${h(analysis.name)} · ${h(analysis.doctor || '—')}</div>
+    <div class="frow">
+      <div class="fg"><label>Status</label><select id="admin-analysis-status">${renderAnalysisStatusOptions(analysis.statusRaw || analysis.status)}</select></div>
+      <div class="fg"><label>Ready date</label><input type="date" id="admin-analysis-ready-date" value="${escapeAttr(analysis.readyAt || analysis.date || '')}"/></div>
+    </div>
+    <div class="fg"><label>Lab note</label><textarea id="admin-analysis-lab-note" placeholder="Lab comment">${h(analysis.labNote || '')}</textarea></div>
+    <div class="fg"><label>Results</label><textarea id="admin-analysis-results" placeholder="Parameter | Value | Unit | Range | ok/abnormal">${h(formatAnalysisResultsText(analysis.results))}</textarea></div>
+    <div class="note">Each result line format: <code>Parameter | Value | Unit | Range | ok/abnormal</code></div>
+    <div class="fg" style="margin-top:12px"><label><input id="admin-analysis-visible" type="checkbox" ${analysis.isVisibleToPatient ? 'checked' : ''} style="margin-right:8px"/>Visible to patient</label></div>`;
+  document.querySelector('.modal-ft').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitAdminAnalysisUpdate()">Save</button>`;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+async function submitAdminAnalysisUpdate() {
+  if (!ACTIVE_ANALYSIS_MODAL_ID) return;
+  let results = [];
+  try {
+    results = parseAnalysisResultsText(getInputValue('admin-analysis-results', false));
+  } catch (error) {
+    showToast(error.message, 'error');
+    return;
+  }
+  try {
+    await apiPut(`/admin/analyses/${ACTIVE_ANALYSIS_MODAL_ID}`, {
+      status: getInputValue('admin-analysis-status', false),
+      ready_at: getInputValue('admin-analysis-ready-date', false) || null,
+      lab_note: getInputValue('admin-analysis-lab-note', true) || null,
+      results,
+      is_visible_to_patient: !!(document.getElementById('admin-analysis-visible') || {}).checked,
+    });
+    await loadAdminData();
+    currentPage = 'admin';
+    renderPage();
+    closeModal();
+    showToast('Analysis updated.', 'success');
+  } catch (error) {
+    showToast('Failed to update analysis: ' + error.message, 'error');
+  }
+}
+
+function renderDoctorOptions() {
+  if (!DOCTORS.length) {
+    return '<option value="">No active doctors available</option>';
+  }
+  return ['<option value="">Select doctor</option>'].concat(
+    DOCTORS.map(doctor => `<option value="${doctor.id}">${h(doctor.name)}${doctor.department ? ' · ' + h(doctor.department) : ''}</option>`)
+  ).join('');
+}
+
+function renderBookingTimeOptions(selectedTime) {
+  if (BOOKING_LOADING) {
+    return '<option value="">Loading available slots...</option>';
+  }
+  if (!getInputValue('m-doc', false) || !getInputValue('m-date', false)) {
+    return '<option value="">Select doctor and date first</option>';
+  }
+  if (!BOOKING_SLOTS.length) {
+    return '<option value="">No free slots for this day</option>';
+  }
+  return ['<option value="">Select time slot</option>'].concat(
+    BOOKING_SLOTS.map(slot => `<option value="${slot}" ${slot === selectedTime ? 'selected' : ''}>${slot}</option>`)
+  ).join('');
+}
+
+function updateBookingTimeSelect(selectedTime) {
+  const timeSelect = document.getElementById('m-time');
+  const hint = document.getElementById('booking-slots-hint');
+  if (!timeSelect) return;
+  timeSelect.innerHTML = renderBookingTimeOptions(selectedTime || '');
+  timeSelect.disabled = BOOKING_LOADING || !BOOKING_SLOTS.length;
+  if (hint) {
+    if (BOOKING_LOADING) {
+      hint.textContent = 'Checking doctor schedule...';
+    } else if (!getInputValue('m-doc', false) || !getInputValue('m-date', false)) {
+      hint.textContent = 'Choose a doctor and date to see 15-minute sessions from 09:00 to 18:00.';
+    } else if (!BOOKING_SLOTS.length) {
+      hint.textContent = 'No free sessions left for this date. Choose another day.';
+    } else {
+      hint.textContent = `Available sessions: ${BOOKING_SLOTS.length}. Working hours: 09:00-18:00, every 15 minutes.`;
+    }
+  }
+}
+
+async function refreshBookingSlots(silent) {
+  if (MODAL_MODE !== 'appointment') return;
+  const doctorUserId = Number(getInputValue('m-doc', false));
+  const date = getInputValue('m-date', false);
+  const previouslySelectedTime = getInputValue('m-time', false);
+  BOOKING_SLOTS = [];
+  if (!doctorUserId || !date) {
+    BOOKING_LOADING = false;
+    updateBookingTimeSelect('');
+    return;
+  }
+  BOOKING_LOADING = true;
+  updateBookingTimeSelect('');
+  const requestToken = ++BOOKING_FETCH_TOKEN;
+  try {
+    const payload = await apiGet(`/doctors/${doctorUserId}/availability`, {date});
+    if (requestToken !== BOOKING_FETCH_TOKEN) return;
+    BOOKING_SLOTS = payload.available_slots || [];
+    BOOKING_LOADING = false;
+    updateBookingTimeSelect(previouslySelectedTime);
+  } catch (error) {
+    if (requestToken !== BOOKING_FETCH_TOKEN) return;
+    BOOKING_LOADING = false;
+    BOOKING_SLOTS = [];
+    updateBookingTimeSelect('');
+    if (!silent) {
+      showToast('Failed to load available slots: ' + error.message, 'error');
+    }
+  }
+}
+
+function renderAppointmentModalForm() {
+  MODAL_MODE = 'appointment';
+  PASSWORD_RESET_USER_ID = null;
+  setModalTitle('Book appointment');
+  const minDate = getLocalDateIso(0);
+  const defaultDate = getDefaultBookingDate();
+  document.getElementById('modal-body').innerHTML = `
+    <div class="fg"><label>Doctor</label>
+      <select id="m-doc" onchange="refreshBookingSlots()">
+        ${renderDoctorOptions()}
       </select>
     </div>
     <div class="frow">
-      <div class="fg"><label>Date</label><input type="date" id="m-date"/></div>
-      <div class="fg"><label>Time</label><input type="time" id="m-time"/></div>
+      <div class="fg"><label>Date</label><input type="date" id="m-date" min="${minDate}" value="${defaultDate}" onchange="refreshBookingSlots()"/></div>
+      <div class="fg"><label>Session time</label><select id="m-time" disabled>${renderBookingTimeOptions('')}</select></div>
     </div>
+    <div id="booking-slots-hint" style="font-size:12px;color:#64748b;margin:-4px 0 8px">Choose a doctor and date to see 15-minute sessions from 09:00 to 18:00.</div>
     <div class="fg"><label>Reason</label><textarea id="m-reason" placeholder="Describe your symptoms..."></textarea></div>`;
   document.querySelector('.modal-ft').innerHTML = `
     <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
     <button class="btn btn-primary" onclick="submitAppt()">Book</button>`;
+  updateBookingTimeSelect('');
 }
 
-function submitAppt() {
-  const doc = document.getElementById('m-doc')?.value;
-  if(!doc) { alert('Please select a doctor speciality'); return; }
-  const date = document.getElementById('m-date')?.value;
-  const time = document.getElementById('m-time')?.value;
-  const reason = document.getElementById('m-reason')?.value || '';
-  if(!date || !time) { alert('Please select date and time'); return; }
+function openModal() {
+  renderAppointmentModalForm();
+  document.getElementById('modal').classList.remove('hidden');
+}
 
-  apiPost('/appointments', {
-    user_id: USER_ID,
-    doctor: doc,
-    date,
-    time,
-    reason
-  }).then(async () => {
-    const appointments = await apiGet(`/appointments/${USER_ID}`);
-    APPOINTMENTS = (appointments || []).map(a => {
-      const iso = normalizeDate(a.date);
-      const day = iso ? iso.split('-')[2] : '--';
-      return {
-        id: a.id,
-        doctor: a.doctor,
-        spec: a.speciality || a.doctor,
-        day,
-        mon: monthShort(iso),
-        time: a.time || '--:--',
-        place: a.place || 'TBD',
-        status: a.status || 'pending',
-        dateISO: iso
-      };
-    });
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+  MODAL_MODE = 'appointment';
+  PASSWORD_RESET_USER_ID = null;
+  ACTIVE_ANALYSIS_MODAL_ID = null;
+  BOOKING_SLOTS = [];
+  BOOKING_LOADING = false;
+  BOOKING_FETCH_TOKEN += 1;
+  renderAppointmentModalForm();
+}
 
+async function submitAppt() {
+  const doctorUserId = Number(getInputValue('m-doc', false));
+  const date = getInputValue('m-date', false);
+  const time = getInputValue('m-time', false);
+  const reason = getInputValue('m-reason', false) || '';
+  if (!doctorUserId) {
+    showToast('Please select a doctor.', 'error');
+    return;
+  }
+  if (!date || !time) {
+    showToast('Please select date and time.', 'error');
+    return;
+  }
+  try {
+    await apiPost('/appointments', {user_id: USER.id, doctor_user_id: doctorUserId, date, time, reason});
+    await loadPatientData();
     document.getElementById('modal-body').innerHTML = `
       <div style="text-align:center;padding:20px 0">
-        <div style="font-size:52px;margin-bottom:12px">✅</div>
-        <h3 style="margin-bottom:6px">Request submitted!</h3>
+        <div style="font-size:52px;margin-bottom:12px">✓</div>
+        <h3 style="margin-bottom:6px">Request submitted</h3>
         <p style="color:#64748b;font-size:13.5px">You will receive confirmation soon</p>
       </div>`;
     document.querySelector('.modal-ft').innerHTML = '';
     renderPage();
+    showToast('Appointment request submitted.', 'success');
     setTimeout(closeModal, 2200);
-  }).catch((e) => {
-    alert('Failed to create appointment: ' + e.message);
-  });
+  } catch (error) {
+    showToast('Failed to create appointment: ' + error.message, 'error');
+  }
+}
+
+function renderAppError(message) {
+  setLoggedOutLayout(false);
+  document.getElementById('page-title').textContent = 'Error';
+  document.getElementById('topbar-actions').innerHTML = '';
+  document.getElementById('content').innerHTML = `
+    <div class="page">
+      <div class="card">
+        <div class="card-body">
+          <div class="empty" style="padding:40px 20px">
+            <div style="font-size:18px;font-weight:600;color:#0f172a;margin-bottom:8px">Failed to load portal data</div>
+            <div>${h(message)}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
 }
 
 async function initApp() {
-  await loadInitialData();
-  renderSidebarUser();
-  buildNav();
-  renderTopbarActions();
-  renderPage();
+  try {
+    const ok = await loadInitialData();
+    if (!ok) {
+      renderAuthScreen();
+      return;
+    }
+    ensureValidPage();
+    const activePage = getPages().find(page => page.id === currentPage) || getPages()[0];
+    document.getElementById('page-title').textContent = activePage.title;
+    renderSidebarUser();
+    buildNav();
+    renderTopbarActions();
+    renderPage();
+  } catch (error) {
+    if (String(error.message || '').includes('Сессия')) {
+      await logout();
+      return;
+    }
+    console.error('Failed to initialize app', error);
+    renderAppError(error.message);
+  }
 }
 
+renderAuthScreen();
 initApp();
 </script>
 </body>
