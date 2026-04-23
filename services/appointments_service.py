@@ -1,0 +1,65 @@
+from datetime import datetime
+
+from fastapi import HTTPException
+
+from app_helpers import (
+    build_slot_datetime,
+    ensure_active,
+    get_doctor_booked_slots,
+    normalize_calendar_date,
+    normalize_slot_time,
+    patient_has_slot_conflict,
+    require_user_scope,
+)
+from schemas import AppointmentCreate
+
+
+def get_user_appointments(db, actor, user_id: int):
+    require_user_scope(db, actor, user_id, cross_user_permission="users:read")
+    rows = db.execute("SELECT * FROM appointments WHERE user_id=? ORDER BY date", (user_id,)).fetchall()
+    return [dict(row) for row in rows]
+
+
+def create_appointment(db, actor, data: AppointmentCreate):
+    user_id = data.user_id or actor["id"]
+    _, target_user = require_user_scope(db, actor, user_id, cross_user_permission="users:update")
+    if target_user["role"] != "user":
+        raise HTTPException(status_code=400, detail="Запись к доктору доступна только пациенту")
+    ensure_active(target_user)
+    if not data.doctor_user_id:
+        raise HTTPException(status_code=400, detail="Выберите доктора")
+    date_iso = normalize_calendar_date(data.date)
+    time_hhmm = normalize_slot_time(data.time)
+    slot_datetime = build_slot_datetime(date_iso, time_hhmm)
+    if slot_datetime <= datetime.now():
+        raise HTTPException(status_code=400, detail="Нельзя записаться на прошедшее время")
+    doctor = db.execute(
+        "SELECT * FROM users WHERE id=? AND role='doctor'",
+        (data.doctor_user_id,),
+    ).fetchone()
+    if not doctor:
+        raise HTTPException(status_code=400, detail="Доктор не найден")
+    ensure_active(doctor)
+    if patient_has_slot_conflict(db, user_id, date_iso, time_hhmm):
+        raise HTTPException(status_code=409, detail="У пациента уже есть запись на это время")
+    doctor_booked_slots = get_doctor_booked_slots(db, doctor["id"], date_iso)
+    if time_hhmm in doctor_booked_slots:
+        raise HTTPException(status_code=409, detail="Это время у доктора уже занято")
+    db.execute(
+        """
+        INSERT INTO appointments (user_id, doctor_user_id, doctor, speciality, date, time, reason, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'ожидание')
+        """,
+        (
+            user_id,
+            doctor["id"],
+            doctor["name"],
+            doctor["department"] or doctor["name"],
+            date_iso,
+            time_hhmm,
+            data.reason,
+        ),
+    )
+    db.commit()
+    new_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    return {"id": new_id, "status": "created"}
