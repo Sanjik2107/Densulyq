@@ -171,6 +171,34 @@ body.logged-out .modal-overlay{display:none!important}
 .toast{min-width:260px;max-width:340px;padding:12px 14px;border-radius:14px;border:1px solid #dbe4f0;background:#fff;box-shadow:0 14px 34px rgba(15,23,42,.12);font-size:13px;line-height:1.5;color:#0f172a}
 .toast.error{border-color:#fecaca;background:#fff7f7;color:#b91c1c}
 .toast.success{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+.hero-card{position:relative;overflow:hidden;border-radius:24px;padding:28px;background:radial-gradient(circle at top left,#1d4ed8 0,#0f172a 58%,#04111f 100%);color:#fff;box-shadow:0 24px 60px rgba(15,23,42,.22)}
+.hero-card::before{content:"";position:absolute;inset:auto -40px -70px auto;width:220px;height:220px;border-radius:50%;background:rgba(148,197,255,.12)}
+.hero-card::after{content:"";position:absolute;top:-60px;right:110px;width:180px;height:180px;border-radius:50%;background:rgba(96,165,250,.14);filter:blur(4px)}
+.hero-grid{display:grid;grid-template-columns:1.4fr .9fr;gap:18px;position:relative;z-index:1}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(191,219,254,.18);border-radius:999px;background:rgba(255,255,255,.08);font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#dbeafe}
+.hero-title{font-size:32px;line-height:1.02;letter-spacing:-1.4px;margin:16px 0 12px;max-width:12ch}
+.hero-copy{max-width:58ch;color:rgba(226,232,240,.88);font-size:14px;line-height:1.7}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.btn-hero-primary{background:#f8fafc;color:#0f172a}
+.btn-hero-primary:hover{background:#e2e8f0}
+.btn-hero-ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(191,219,254,.2)}
+.btn-hero-ghost:hover{background:rgba(255,255,255,.14)}
+.hero-panel{border-radius:20px;padding:18px;background:rgba(255,255,255,.08);border:1px solid rgba(191,219,254,.16);backdrop-filter:blur(10px)}
+.hero-panel-title{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#bfdbfe;margin-bottom:14px}
+.hero-metric{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(191,219,254,.12)}
+.hero-metric:last-child{border-bottom:none;padding-bottom:0}
+.hero-metric-label{font-size:12px;color:rgba(226,232,240,.72)}
+.hero-metric-value{font-size:13px;font-weight:600;text-align:right}
+.insight-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}
+.insight-card{border-radius:18px;padding:18px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 8px 30px rgba(15,23,42,.06)}
+.insight-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#94a3b8;margin-bottom:10px}
+.insight-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+.insight-copy{font-size:13px;line-height:1.65;color:#475569}
+.signal-list{display:flex;flex-direction:column;gap:12px}
+.signal-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.signal-item:last-child{border-bottom:none;padding-bottom:0}
+.signal-dot{width:12px;height:12px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.section-split{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
 
 @media (max-width:1100px){
   .app{flex-direction:column}
@@ -178,7 +206,7 @@ body.logged-out .modal-overlay{display:none!important}
   .main{margin-left:0}
   .content{padding:16px}
   .topbar{padding:0 16px}
-  .g2,.g3,.g4,.frow,.admin-layout,.profile-grid,.auth-shell{grid-template-columns:1fr}
+  .g2,.g3,.g4,.frow,.admin-layout,.profile-grid,.auth-shell,.hero-grid,.insight-grid,.section-split{grid-template-columns:1fr}
 }
 
 @media (max-width:720px){
@@ -254,6 +282,8 @@ body.logged-out .modal-overlay{display:none!important}
 </div>
 
 <script>
+
+
 window.__renderBootstrapError = function(message) {
   var title = document.getElementById('page-title');
   var actions = document.getElementById('topbar-actions');
@@ -282,9 +312,7 @@ window.addEventListener('unhandledrejection', function(event) {
   var message = reason && reason.message ? reason.message : String(reason || 'Unhandled promise rejection');
   window.__renderBootstrapError(message);
 });
-</script>
 
-<script>
 const API_BASE = (() => {
   const qsApi = new URLSearchParams(window.location.search).get('api');
   if (qsApi) return qsApi.replace(/\/$/, '');
@@ -295,6 +323,7 @@ const API_BASE = (() => {
 })();
 
 const AUTH_STORAGE_KEY = 'densaulyq-auth-v2';
+
 const DEFAULT_USER = {
   id: 1,
   name: 'Patient',
@@ -379,6 +408,18 @@ const I18N_MAP = {
   '×10¹²/л': '×10¹²/L',
   '×10⁹/л': '×10⁹/L',
 };
+
+const ANALYSIS_NAME_OPTIONS = [
+  'Complete blood count',
+  'Blood biochemistry',
+  'Urinalysis',
+  'ECG',
+  'Thyroid panel',
+  'Lipid panel',
+  'Liver panel',
+  'Vitamin D',
+];
+
 
 function getStoredAuthState() {
   try {
@@ -470,93 +511,6 @@ function getDefaultChatMessages() {
   ];
 }
 
-let AUTH_STATE = getStoredAuthState();
-let AUTH_MODE = AUTH_STATE.portal || 'patient';
-let AUTH_VIEW = 'login';
-let AUTH_ERROR = '';
-let ACTIVE_CONTEXT = {user:null, permissions:[], portal:'patient'};
-let USER = Object.assign({}, DEFAULT_USER);
-let ANALYSES = [];
-let APPOINTMENTS = [];
-let REFERRALS = [];
-let DOCTORS = [];
-let ADMIN_USERS = [];
-let ADMIN_STATS = {total_users: 0, admins: 0, doctors: 0, users: 0, active_users: 0};
-let ADMIN_ANALYSES = [];
-let DOCTOR_PATIENTS = [];
-let DOCTOR_STATS = {total_patients: 0, ready_analyses: 0, active_referrals: 0, appointments: 0};
-let DOCTOR_ACTIVE_PATIENT_ID = null;
-let DOCTOR_ACTIVE_PATIENT = null;
-let DOCTOR_ACTIVE_ANALYSES = [];
-let DOCTOR_ACTIVE_APPOINTMENTS = [];
-let DOCTOR_ACTIVE_REFERRALS = [];
-let RB_MODEL = [];
-let currentPage = 'dashboard';
-let selectedAnalysis = null;
-let chatMessages = getDefaultChatMessages();
-let aiLoading = false;
-let profileEditing = false;
-let profileData = Object.assign({}, USER);
-let MODAL_MODE = 'appointment';
-let PASSWORD_RESET_USER_ID = null;
-let ACTIVE_ANALYSIS_MODAL_ID = null;
-let BOOKING_SLOTS = [];
-let BOOKING_LOADING = false;
-let BOOKING_FETCH_TOKEN = 0;
-const ANALYSIS_NAME_OPTIONS = [
-  'Complete blood count',
-  'Blood biochemistry',
-  'Urinalysis',
-  'ECG',
-  'Thyroid panel',
-  'Lipid panel',
-  'Liver panel',
-  'Vitamin D',
-];
-
-function persistCurrentPage() {
-  if (!AUTH_STATE.token) return;
-  AUTH_STATE = Object.assign({}, AUTH_STATE, {page: currentPage});
-  setStoredAuthState(AUTH_STATE);
-}
-
-function isAuthenticated() {
-  return !!AUTH_STATE.token;
-}
-
-function isAdmin() {
-  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'admin');
-}
-
-function isDoctor() {
-  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'doctor');
-}
-
-function isPatient() {
-  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'user');
-}
-
-function getPages() {
-  if (isAdmin()) return ADMIN_PAGES;
-  if (isDoctor()) return DOCTOR_PAGES;
-  return USER_PAGES;
-}
-
-function getDefaultPageForRole(role) {
-  return role === 'admin' ? 'admin' : 'dashboard';
-}
-
-function formatRole(role) {
-  if (role === 'admin') return 'Admin';
-  if (role === 'doctor') return 'Doctor';
-  return 'Patient';
-}
-
-function getRoleChip(role) {
-  const roleClass = role === 'admin' ? 'admin' : role === 'doctor' ? 'doctor' : 'user';
-  return '<span class="role-chip ' + roleClass + '">' + formatRole(role) + '</span>';
-}
-
 function getInitials(fullName) {
   if (!fullName) return 'PT';
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -627,6 +581,93 @@ function buildUrl(path, params) {
     }
   });
   return url.toString();
+}
+
+function sortByDateDesc(items, key) {
+  return [].concat(items).sort((a, b) => normalizeDate(b[key]).localeCompare(normalizeDate(a[key])));
+}
+
+function sortByDateAsc(items, key) {
+  return [].concat(items).sort((a, b) => normalizeDate(a[key]).localeCompare(normalizeDate(b[key])));
+}
+
+
+
+let AUTH_STATE = getStoredAuthState();
+let AUTH_MODE = AUTH_STATE.portal || 'patient';
+let AUTH_VIEW = 'login';
+let AUTH_ERROR = '';
+let ACTIVE_CONTEXT = {user:null, permissions:[], portal:'patient'};
+let USER = Object.assign({}, DEFAULT_USER);
+let ANALYSES = [];
+let APPOINTMENTS = [];
+let REFERRALS = [];
+let DOCTORS = [];
+let ADMIN_USERS = [];
+let ADMIN_STATS = {total_users: 0, admins: 0, doctors: 0, users: 0, active_users: 0};
+let ADMIN_ANALYSES = [];
+let DOCTOR_PATIENTS = [];
+let DOCTOR_STATS = {total_patients: 0, ready_analyses: 0, active_referrals: 0, appointments: 0};
+let DOCTOR_ACTIVE_PATIENT_ID = null;
+let DOCTOR_ACTIVE_PATIENT = null;
+let DOCTOR_ACTIVE_ANALYSES = [];
+let DOCTOR_ACTIVE_APPOINTMENTS = [];
+let DOCTOR_ACTIVE_REFERRALS = [];
+let RB_MODEL = [];
+let currentPage = 'dashboard';
+let selectedAnalysis = null;
+let chatMessages = getDefaultChatMessages();
+let aiLoading = false;
+let profileEditing = false;
+let profileData = Object.assign({}, USER);
+let MODAL_MODE = 'appointment';
+let PASSWORD_RESET_USER_ID = null;
+let ACTIVE_ANALYSIS_MODAL_ID = null;
+let BOOKING_SLOTS = [];
+let BOOKING_LOADING = false;
+let BOOKING_FETCH_TOKEN = 0;
+
+function persistCurrentPage() {
+  if (!AUTH_STATE.token) return;
+  AUTH_STATE = Object.assign({}, AUTH_STATE, {page: currentPage});
+  setStoredAuthState(AUTH_STATE);
+}
+
+function isAuthenticated() {
+  return !!AUTH_STATE.token;
+}
+
+function isAdmin() {
+  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'admin');
+}
+
+function isDoctor() {
+  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'doctor');
+}
+
+function isPatient() {
+  return !!(ACTIVE_CONTEXT.user && ACTIVE_CONTEXT.user.role === 'user');
+}
+
+function getPages() {
+  if (isAdmin()) return ADMIN_PAGES;
+  if (isDoctor()) return DOCTOR_PAGES;
+  return USER_PAGES;
+}
+
+function getDefaultPageForRole(role) {
+  return role === 'admin' ? 'admin' : 'dashboard';
+}
+
+function formatRole(role) {
+  if (role === 'admin') return 'Admin';
+  if (role === 'doctor') return 'Doctor';
+  return 'Patient';
+}
+
+function getRoleChip(role) {
+  const roleClass = role === 'admin' ? 'admin' : role === 'doctor' ? 'doctor' : 'user';
+  return '<span class="role-chip ' + roleClass + '">' + formatRole(role) + '</span>';
 }
 
 async function requestJson(path, options) {
@@ -1265,63 +1306,108 @@ function renderUserDashboard() {
   const activeReferrals = REFERRALS.filter(item => item.status === 'active').length;
   const latestAnalysis = ANALYSES.length ? ANALYSES[0] : null;
   const latestReferral = REFERRALS.length ? REFERRALS[0] : null;
+  const pendingAnalyses = ANALYSES.filter(item => ['ordered', 'processing'].includes(item.status)).length;
+  const abnormalCount = getAbnormalCount();
+  const careStage = nextAppointment
+    ? `Next visit with ${nextAppointment.doctor} on ${nextAppointment.day} ${nextAppointment.mon} at ${nextAppointment.time}.`
+    : pendingAnalyses
+      ? `${pendingAnalyses} analysis${pendingAnalyses > 1 ? 'es are' : ' is'} still in progress.`
+      : 'No urgent activity right now. You can schedule a preventive visit.';
   const scoreBadge = score >= 85 ? 'b-green' : score >= 70 ? 'b-warn' : 'b-red';
   const scoreStatus = score >= 85 ? 'Excellent' : score >= 70 ? 'Good' : 'Needs attention';
   const r = 42;
   const circ = 2 * Math.PI * r;
   const arc = circ * score / 100;
-  const indicators = [
-    {label:'Cardiovascular',val:Math.max(58, score - 4),color:'#2563eb'},
-    {label:'Metabolism',val:Math.max(52, score - 8),color:'#10b981'},
-    {label:'Immunity',val:Math.max(55, score - 6),color:'#8b5cf6'},
-    {label:'Overall condition',val:score,color:'#f59e0b'},
-  ];
   return `
-  <div style="display:flex;gap:18px;margin-bottom:18px;align-items:flex-start;flex-wrap:wrap">
-    <div class="card" style="flex:0 0 270px">
-      <div class="card-head"><div><h3>Health score</h3><p>Calculated from completed analyses</p></div></div>
-      <div class="card-body">
-        <div style="display:flex;align-items:center;gap:18px;margin-bottom:16px">
-          <div class="hcircle">
-            <svg width="96" height="96" viewBox="0 0 96 96">
-              <circle cx="48" cy="48" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="8"/>
-              <circle cx="48" cy="48" r="${r}" fill="none" stroke="#2563eb" stroke-width="8" stroke-dasharray="${arc} ${circ}" stroke-linecap="round"/>
-            </svg>
-            <div class="hcircle-txt"><div class="hcircle-num">${score}</div><div class="hcircle-lbl">of 100</div></div>
-          </div>
-          <div>
-            <span class="badge ${scoreBadge}" style="margin-bottom:8px">${scoreStatus}</span>
-            <p style="font-size:12.5px;color:#64748b;line-height:1.6">${getAbnormalCount() ? 'Minor deviations were found in the latest lab results.' : 'No significant deviations were found in the latest records.'}</p>
-          </div>
+  <div class="hero-card" style="margin-bottom:18px">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-eyebrow">Personal care cockpit</div>
+        <div class="hero-title">Good to see you, ${h(USER.name ? USER.name.split(' ')[0] : 'Patient')}.</div>
+        <div class="hero-copy">${h(careStage)} ${abnormalCount ? 'Your latest records still have a few signals worth tracking.' : 'Your recent records look stable, so this is a good moment to stay proactive.'}</div>
+        <div class="hero-actions">
+          <button class="btn btn-hero-primary" onclick="openModal()">Book a visit</button>
+          <button class="btn btn-hero-ghost" onclick="navigate('analyses')">Open analyses</button>
+          <button class="btn btn-hero-ghost" onclick="navigate('ai')">Ask AI assistant</button>
         </div>
-        ${indicators.map(item => `
-          <div class="prog-wrap">
-            <div class="prog-row"><span style="color:#64748b">${item.label}</span><span style="font-weight:500">${item.val}%</span></div>
-            <div class="prog-bar"><div class="prog-fill" style="width:${item.val}%;background:${item.color}"></div></div>
+      </div>
+      <div class="hero-panel">
+        <div class="hero-panel-title">Today at a glance</div>
+        ${[
+          ['Health score', score + '/100'],
+          ['Ready analyses', String(readyAnalyses)],
+          ['Abnormal markers', String(abnormalCount)],
+          ['Active referrals', String(activeReferrals)],
+          ['Next appointment', nextAppointment ? `${nextAppointment.day} ${nextAppointment.mon} · ${nextAppointment.time}` : 'Not scheduled'],
+        ].map(item => `
+          <div class="hero-metric">
+            <div class="hero-metric-label">${h(item[0])}</div>
+            <div class="hero-metric-value">${h(item[1])}</div>
           </div>
         `).join('')}
       </div>
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:280px">
-      <div class="g4">
+  </div>
+  <div class="insight-grid">
+    <div class="insight-card">
+      <div class="insight-kicker">Current balance</div>
+      <div style="display:flex;align-items:center;gap:18px">
+        <div class="hcircle">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+            <circle cx="48" cy="48" r="${r}" fill="none" stroke="#2563eb" stroke-width="8" stroke-dasharray="${arc} ${circ}" stroke-linecap="round"/>
+          </svg>
+          <div class="hcircle-txt"><div class="hcircle-num">${score}</div><div class="hcircle-lbl">of 100</div></div>
+        </div>
+        <div>
+          <span class="badge ${scoreBadge}" style="margin-bottom:10px">${scoreStatus}</span>
+          <div class="insight-copy">${abnormalCount ? 'A few lab markers need attention, but the overall picture is still manageable.' : 'No strong warning signals in the latest results.'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-kicker">Next best step</div>
+      <div class="insight-title">${nextAppointment ? 'Prepare for your visit' : 'Stay proactive'}</div>
+      <div class="insight-copy">${nextAppointment ? `Your next visit is with ${nextAppointment.doctor}. Keep notes about symptoms and bring recent questions.` : 'If something feels off, book a visit. If not, use this calm period for preventive checks and profile updates.'}</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-kicker">Signals to watch</div>
+      <div class="signal-list">
         ${[
-          {lbl:'Last analysis',val:h(latestAnalysis ? latestAnalysis.date : '—'),sub:h(latestAnalysis ? latestAnalysis.doctor : 'No records'),ico:'LAB',bg:'#dbeafe',c:'#2563eb'},
-          {lbl:'Referrals',val:h(String(activeReferrals)),sub:h(activeReferrals ? `Due by ${latestReferral ? latestReferral.deadline : 'n/a'}` : 'No active referrals'),ico:'REF',bg:'#d1fae5',c:'#059669'},
-          {lbl:'Analyses',val:h(String(ANALYSES.length)),sub:h(`${readyAnalyses} ready`),ico:'CBC',bg:'#ede9fe',c:'#7c3aed'},
-          {lbl:'Appointments',val:h(String(APPOINTMENTS.length)),sub:h(nextAppointment ? `Next on ${nextAppointment.day} ${nextAppointment.mon}` : 'No upcoming visits'),ico:'VIS',bg:'#fef3c7',c:'#d97706'},
-        ].map(card => `
-          <div class="stat">
-            <div class="stat-icon" style="background:${card.bg};color:${card.c};font-size:12px;font-weight:700">${card.ico}</div>
-            <div class="stat-lbl">${card.lbl}</div>
-            <div class="stat-val" style="color:${card.c}">${card.val}</div>
-            <div class="stat-sub">${card.sub}</div>
+          {label:`${readyAnalyses} ready analyses available`, tone:'#2563eb'},
+          {label:`${pendingAnalyses} items still in workflow`, tone:'#f59e0b'},
+          {label:activeReferrals ? `${activeReferrals} active referrals before ${latestReferral ? latestReferral.deadline : 'their deadlines'}` : 'No open referrals right now', tone:'#10b981'},
+        ].map(item => `
+          <div class="signal-item">
+            <div class="signal-dot" style="background:${item.tone}"></div>
+            <div style="font-size:13px;line-height:1.55;color:#334155">${h(item.label)}</div>
           </div>
         `).join('')}
       </div>
+    </div>
+  </div>
+  <div class="section-split">
+    <div class="card">
+      <div class="card-head"><div><h3>Latest analyses</h3><p>Most recent lab updates and result states</p></div><button class="btn btn-secondary btn-sm" onclick="navigate('analyses')">All →</button></div>
+      <div class="card-body" style="padding-top:8px">
+        ${ANALYSES.length ? ANALYSES.slice(0,3).map(item => `
+          <div class="li">
+            <div class="li-icon" style="background:#dbeafe;color:#2563eb;font-size:12px;font-weight:700">LAB</div>
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:500">${h(item.name)}</div>
+              <div style="font-size:12px;color:#64748b">${h(item.date)} · ${h(item.doctor)}</div>
+              ${(item.labNote || item.doctorNote) ? `<div style="font-size:12px;color:#475569;margin-top:4px">${h(item.labNote || item.doctorNote)}</div>` : ''}
+            </div>
+            <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
+          </div>
+        `).join('') : '<div class="empty">No analyses linked to this user yet.</div>'}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
       <div class="card">
-        <div class="card-head"><div><h3>Upcoming appointments</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('appointments')">All →</button></div>
+        <div class="card-head"><div><h3>Upcoming appointments</h3><p>Your nearest visits and their status</p></div><button class="btn btn-secondary btn-sm" onclick="navigate('appointments')">All →</button></div>
         <div class="card-body" style="padding-top:10px">
-          ${APPOINTMENTS.length ? APPOINTMENTS.slice(0,2).map(item => `
+          ${APPOINTMENTS.length ? APPOINTMENTS.slice(0,3).map(item => `
             <div class="appt">
               <div class="appt-date"><div class="appt-day">${h(item.day)}</div><div class="appt-mon">${h(item.mon)}</div></div>
               <div style="flex:1"><div style="font-size:14px;font-weight:600">${h(item.doctor)}</div><div style="font-size:12px;color:#64748b">${h(item.spec)} · ${h(item.place)}</div></div>
@@ -1330,31 +1416,17 @@ function renderUserDashboard() {
           `).join('') : '<div class="empty">No appointments yet.</div>'}
         </div>
       </div>
-    </div>
-  </div>
-  <div class="g2">
-    <div class="card">
-      <div class="card-head"><div><h3>Latest analyses</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('analyses')">All →</button></div>
-      <div class="card-body" style="padding-top:8px">
-        ${ANALYSES.length ? ANALYSES.slice(0,3).map(item => `
-          <div class="li">
-            <div class="li-icon" style="background:#dbeafe">🧪</div>
-            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${h(item.name)}</div><div style="font-size:12px;color:#64748b">${h(item.date)} · ${h(item.doctor)}</div></div>
-            <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
-          </div>
-        `).join('') : '<div class="empty">No analyses linked to this user yet.</div>'}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><div><h3>Active referrals</h3></div><button class="btn btn-secondary btn-sm" onclick="navigate('referrals')">All →</button></div>
-      <div class="card-body" style="padding-top:8px">
-        ${REFERRALS.length ? REFERRALS.map(item => `
-          <div class="li">
-            <div class="li-icon" style="background:${item.status === 'active' ? '#d1fae5' : '#f1f5f9'}">📋</div>
-            <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${h(item.name)}</div><div style="font-size:12px;color:#64748b">from ${h(item.from)} · until ${h(item.deadline)}</div></div>
-            <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
-          </div>
-        `).join('') : '<div class="empty">No referrals linked to this user.</div>'}
+      <div class="card">
+        <div class="card-head"><div><h3>Active referrals</h3><p>Directions and follow-up items</p></div><button class="btn btn-secondary btn-sm" onclick="navigate('referrals')">All →</button></div>
+        <div class="card-body" style="padding-top:8px">
+          ${REFERRALS.length ? REFERRALS.map(item => `
+            <div class="li">
+              <div class="li-icon" style="background:${item.status === 'active' ? '#d1fae5' : '#f1f5f9'};color:${item.status === 'active' ? '#059669' : '#64748b'};font-size:12px;font-weight:700">REF</div>
+              <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${h(item.name)}</div><div style="font-size:12px;color:#64748b">from ${h(item.from)} · until ${h(item.deadline)}</div></div>
+              <span class="badge ${badgeForStatus(item.status)}">${h(item.status)}</span>
+            </div>
+          `).join('') : '<div class="empty">No referrals linked to this user.</div>'}
+        </div>
       </div>
     </div>
   </div>`;
@@ -2564,8 +2636,41 @@ async function initApp() {
   }
 }
 
+Object.assign(window, {
+  applyUserRole,
+  clearAnalysisSelection,
+  closeModal,
+  createAdminUser,
+  logout,
+  logoutAllSessions,
+  navigate,
+  openAdminAnalysisModal,
+  openDoctorAnalysisCreateModal,
+  openDoctorAnalysisReviewModal,
+  openModal,
+  refreshBookingSlots,
+  refreshDoctorData,
+  resetUserPassword,
+  scrollToCreateUser,
+  selectAnalysis,
+  selectDoctorPatient,
+  sendMsg,
+  setInput,
+  submitAdminAnalysisUpdate,
+  submitAppt,
+  submitDoctorAnalysisCreate,
+  submitDoctorAnalysisReview,
+  submitLogin,
+  submitPasswordReset,
+  submitRegister,
+  switchAuthView,
+  toggleEdit,
+  toggleUserStatus,
+});
+
 renderAuthScreen();
 initApp();
+
 </script>
 </body>
 </html>
