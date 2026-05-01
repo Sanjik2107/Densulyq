@@ -3,7 +3,7 @@ export const AUTH_STORAGE_KEY = 'densaulyq-auth-v2'
 
 export const I18N_MAP = {
   'готово':'ready','назначен':'ordered','проверено':'reviewed',
-  'в обработке':'processing','ожидание':'pending','подтверждено':'confirmed',
+  'в обработке':'processing','ожидание':'pending','подтверждено':'confirmed','отменено':'cancelled',
   'активно':'active','выполнено':'completed','Кабинет':'Room',
   'Терапевт':'Therapist','Кардиолог':'Cardiologist','Невролог':'Neurologist',
   'Эндокринолог':'Endocrinologist','Гастроэнтеролог':'Gastroenterologist',
@@ -78,7 +78,7 @@ export function badgeForStatus(status) {
   if (['ready','reviewed','confirmed','active'].includes(status)) return 'b-green'
   if (['processing','pending'].includes(status)) return 'b-warn'
   if (['ordered'].includes(status)) return 'b-gray'
-  if (status === 'inactive') return 'b-red'
+  if (['inactive', 'cancelled'].includes(status)) return 'b-red'
   return 'b-gray'
 }
 
@@ -108,12 +108,12 @@ export function mapUser(user) {
     name: u.name || 'Patient',
     username: u.username || '',
     initials: getInitials(u.name || 'Patient'),
-    dob: u.dob || '—',
-    iin: u.iin || '—',
-    blood: u.blood_type || '—',
-    phone: u.phone || '—',
-    email: u.email || '—',
-    address: u.address || '—',
+    dob: u.dob || '',
+    iin: u.iin || '',
+    blood: u.blood_type || '',
+    phone: u.phone || '',
+    email: u.email || '',
+    address: u.address || '',
     height: u.height ?? '',
     weight: u.weight ?? '',
     role: u.role || 'user',

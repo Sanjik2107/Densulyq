@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import { apiGet, apiPost, apiPut } from '../api.js'
+import { apiGet, apiPatch, apiPost, apiPut } from '../api.js'
 import {
   badgeForStatus, getRoleChip, formatRole, mapAnalysesList, mapAppointmentsList,
   mapReferralsList, mapUser, formatAnalysisResultsText, parseAnalysisResultsText,
@@ -129,29 +129,53 @@ function PatientDashboard({ analyses, appointments, referrals, onNavigate, onOpe
 }
 
 // ── DOCTOR DASHBOARD ──
-function DoctorDashboard({ onNavigate }) {
+function DoctorDashboard({ onNavigate, onDoctorRefreshReady }) {
   const [patients, setPatients] = useState([])
   const [stats, setStats] = useState({})
   const [activePatient, setActivePatient] = useState(null)
   const [activeAnalyses, setActiveAnalyses] = useState([])
   const [activeAppts, setActiveAppts] = useState([])
   const [activeRefs, setActiveRefs] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [offset, setOffset] = useState(0)
+  const limit = 12
   const toast = useToast()
 
+  const loadPatients = async (nextOffset = offset) => {
+    setLoading(true)
+    setError('')
+    try {
+      const d = await apiGet('/doctor/patients', { limit, offset: nextOffset })
+      const pts = (d.patients || []).map(p => ({ ...mapUser(p), ready_analyses: p.ready_analyses || 0, appointment_count: p.appointment_count || 0, active_referrals: p.active_referrals || 0, latest_analysis_date: p.latest_analysis_date || null, next_appointment: p.next_appointment || null }))
+      setPatients(pts)
+      setStats(d.stats || {})
+      setOffset(nextOffset)
+      if (!activePatient && pts.length) selectPatient(pts[0])
+    } catch (e) {
+      setError(e.message || 'Failed to load patients')
+      toast(e.message || 'Failed to load patients')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { loadPatients(0) }, [])
   useEffect(() => {
-    apiGet('/doctor/patients').then(d => {
-      const pts = (d.patients||[]).map(p=>({...mapUser(p), ready_analyses:p.ready_analyses||0, appointment_count:p.appointment_count||0, active_referrals:p.active_referrals||0, latest_analysis_date:p.latest_analysis_date||null, next_appointment:p.next_appointment||null}))
-      setPatients(pts); setStats(d.stats||{})
-      if (pts.length) selectPatient(pts[0])
-    })
-  }, [])
+    if (!onDoctorRefreshReady) return
+    onDoctorRefreshReady(() => () => loadPatients(offset))
+  }, [onDoctorRefreshReady, offset])
 
   const selectPatient = async (p) => {
     setActivePatient(p)
-    const [u, an, ap, rf] = await Promise.all([apiGet('/user/'+p.id), apiGet('/analyses/'+p.id), apiGet('/appointments/'+p.id), apiGet('/referrals/'+p.id)])
-    setActiveAnalyses(mapAnalysesList(an))
-    setActiveAppts(mapAppointmentsList(ap))
-    setActiveRefs(mapReferralsList(rf))
+    try {
+      const [an, ap, rf] = await Promise.all([apiGet('/analyses/' + p.id), apiGet('/appointments/' + p.id), apiGet('/referrals/' + p.id)])
+      setActiveAnalyses(mapAnalysesList(an))
+      setActiveAppts(mapAppointmentsList(ap))
+      setActiveRefs(mapReferralsList(rf))
+    } catch (e) {
+      toast(e.message || 'Failed to load patient details')
+    }
   }
 
   const [showAssign, setShowAssign] = useState(false)
@@ -191,7 +215,7 @@ function DoctorDashboard({ onNavigate }) {
       <div className="admin-layout">
         <div className="stack">
           <div className="card">
-            <div className="card-head"><div><h3>Patients in focus</h3><p>Quick access to available patient accounts</p></div><button className="btn btn-secondary btn-sm" onClick={()=>onNavigate('patients')}>Open all →</button></div>
+            <div className="card-head"><div><h3>Patients in focus</h3><p>Quick access to available patient accounts</p></div><button className="btn btn-secondary btn-sm" onClick={()=>loadPatients(offset)}>Refresh</button></div>
             <div className="card-body" style={{padding:0}}>
               <table className="tbl">
                 <thead><tr><th>Name</th><th>Last analysis</th><th>Appointments</th><th>Ready</th></tr></thead>
@@ -203,9 +227,13 @@ function DoctorDashboard({ onNavigate }) {
                       <td style={{color:'#64748b'}}>{p.appointment_count||0}</td>
                       <td><span className="badge b-blue">{p.ready_analyses||0}</span></td>
                     </tr>
-                  )) : <tr><td colSpan="4"><div className="empty">No patient records available.</div></td></tr>}
+                  )) : <tr><td colSpan="4"><div className="empty">{loading ? 'Loading patients...' : (error || 'No patient records available.')}</div></td></tr>}
                 </tbody>
               </table>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'10px 16px'}}>
+                <button className="btn btn-secondary btn-sm" onClick={() => loadPatients(Math.max(0, offset - limit))} disabled={offset === 0 || loading}>Prev</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => loadPatients(offset + limit)} disabled={patients.length < limit || loading}>Next</button>
+              </div>
             </div>
           </div>
         </div>
@@ -236,6 +264,26 @@ function DoctorDashboard({ onNavigate }) {
                   </div>
                 ))}
                 {!activeAnalyses.length&&<div className="empty">No analyses found.</div>}
+              </div>
+            </div>
+            <div className="card">
+              <div className="card-head">
+                <div><h3>Appointments</h3><p>Visits scheduled for this patient</p></div>
+              </div>
+              <div className="card-body" style={{padding:0}}>
+                <table className="tbl">
+                  <thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {activeAppts.length ? activeAppts.map(ap => (
+                      <tr key={ap.id}>
+                        <td style={{color:'#64748b'}}>{ap.dateISO || '—'}</td>
+                        <td style={{fontWeight:600}}>{ap.time || '—'}</td>
+                        <td style={{fontWeight:500}}>{ap.doctor || '—'}</td>
+                        <td><span className={`badge ${badgeForStatus(ap.status)}`}>{ap.status}</span></td>
+                      </tr>
+                    )) : <tr><td colSpan="4"><div className="empty">No appointments found.</div></td></tr>}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -300,10 +348,10 @@ function AdminDashboard({ onNavigate }) {
 }
 
 // ── DASHBOARD ROUTER ──
-export function Dashboard({ onNavigate, onOpenModal, patientData }) {
+export function Dashboard({ onNavigate, onOpenModal, patientData, onDoctorRefreshReady }) {
   const { isAdmin, isDoctor } = useAuth()
   if (isAdmin) return <AdminDashboard onNavigate={onNavigate} />
-  if (isDoctor) return <DoctorDashboard onNavigate={onNavigate} />
+  if (isDoctor) return <DoctorDashboard onNavigate={onNavigate} onDoctorRefreshReady={onDoctorRefreshReady} />
   return <PatientDashboard analyses={patientData.analyses} appointments={patientData.appointments} referrals={patientData.referrals} onNavigate={onNavigate} onOpenModal={onOpenModal} />
 }
 
@@ -313,9 +361,16 @@ export function Analyses({ analyses }) {
   const toast = useToast()
   const [selected, setSelected] = useState(null)
   const [adminAnalyses, setAdminAnalyses] = useState([])
+  const [adminOffset, setAdminOffset] = useState(0)
+  const adminLimit = 20
   const [editId, setEditId] = useState(null), [editStatus, setEditStatus] = useState(''), [editNote, setEditNote] = useState(''), [editResults, setEditResults] = useState(''), [editDate, setEditDate] = useState(''), [editVisible, setEditVisible] = useState(true)
 
-  useEffect(()=>{if(isAdmin)apiGet('/admin/analyses').then(d=>setAdminAnalyses(mapAnalysesList(d.analyses||[])))}, [isAdmin])
+  const loadAdminAnalyses = async (nextOffset = adminOffset) => {
+    const d = await apiGet('/admin/analyses', { limit: adminLimit, offset: nextOffset })
+    setAdminAnalyses(mapAnalysesList(d.analyses || []))
+    setAdminOffset(nextOffset)
+  }
+  useEffect(() => { if (isAdmin) loadAdminAnalyses(0) }, [isAdmin])
 
   if (isDoctor) return <DoctorAnalysesPage />
 
@@ -324,7 +379,7 @@ export function Analyses({ analyses }) {
     const saveEdit = async () => {
       let results=[]
       try { results=parseAnalysisResultsText(editResults) } catch(e) { toast(e.message); return }
-      try { await apiPut(`/admin/analyses/${editId}`,{status:editStatus,ready_at:editDate||null,lab_note:editNote||null,results,is_visible_to_patient:editVisible}); toast('Analysis updated.','success'); setEditId(null); const d=await apiGet('/admin/analyses'); setAdminAnalyses(mapAnalysesList(d.analyses||[])) } catch(e) { toast(e.message) }
+      try { await apiPut(`/admin/analyses/${editId}`,{status:editStatus,ready_at:editDate||null,lab_note:editNote||null,results,is_visible_to_patient:editVisible}); toast('Analysis updated.','success'); setEditId(null); await loadAdminAnalyses(adminOffset) } catch(e) { toast(e.message) }
     }
     return (
       <div className="page">
@@ -337,6 +392,10 @@ export function Analyses({ analyses }) {
                   <tr key={a.id}><td><div style={{fontWeight:600}}>{a.patientName||'Patient'}</div><div style={{fontSize:12,color:'#64748b'}}>{a.patientUsername||'—'}</div></td><td><div style={{fontWeight:500}}>{a.name}</div><div style={{fontSize:12,color:'#64748b'}}>{a.date||'—'} · {a.doctor||'—'}</div></td><td><span className={`badge ${badgeForStatus(a.status)}`}>{a.status}</span></td><td><button className="btn btn-secondary btn-sm" onClick={()=>openEdit(a)}>Update</button></td></tr>
                 ))}{!adminAnalyses.length&&<tr><td colSpan="4"><div className="empty">No analyses in the queue.</div></td></tr>}</tbody>
               </table>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'10px 16px'}}>
+                <button className="btn btn-secondary btn-sm" onClick={() => loadAdminAnalyses(Math.max(0, adminOffset - adminLimit))} disabled={adminOffset === 0}>Prev</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => loadAdminAnalyses(adminOffset + adminLimit)} disabled={adminAnalyses.length < adminLimit}>Next</button>
+              </div>
             </div>
           </div>
         </div>
@@ -392,23 +451,31 @@ function DoctorAnalysesPage() {
 }
 
 // ── APPOINTMENTS ──
-export function Appointments({ appointments, doctors, onRefresh }) {
+export function Appointments({ appointments, doctors, onRefresh, showModal, onCloseModal, onOpenModal }) {
   const { user } = useAuth()
   const toast = useToast()
-  const [showModal, setShowModal] = useState(false)
   const [docId, setDocId] = useState(''), [date, setDate] = useState(getDefaultBookingDate()), [slots, setSlots] = useState([]), [selSlot, setSelSlot] = useState(''), [reason, setReason] = useState(''), [slotsLoading, setSlotsLoading] = useState(false)
 
   const loadSlots = async (did, dt) => {
     if (!did || !dt) return
     setSlotsLoading(true); setSelSlot(''); setSlots([])
-    try { const d=await apiGet(`/doctors/${did}/availability`,{date:dt}); setSlots(d.available_slots||[]) } catch{}
-    setSlotsLoading(false)
+    try { const d=await apiGet(`/doctors/${did}/availability`,{date:dt}); setSlots(d.available_slots||[]) } catch(e) { toast(e.message || 'Failed to load slots') }
+    finally { setSlotsLoading(false) }
   }
 
   const submit = async () => {
     if (!docId) return toast('Please select a doctor.')
     if (!selSlot) return toast('Please select date and time.')
-    try { await apiPost('/appointments',{user_id:user.id,doctor_user_id:Number(docId),date,time:selSlot,reason}); toast('Appointment request submitted.','success'); setShowModal(false); onRefresh() } catch(e) { toast(e.message) }
+    try { await apiPost('/appointments',{user_id:user.id,doctor_user_id:Number(docId),date,time:selSlot,reason}); toast('Appointment request submitted.','success'); onCloseModal?.(); onRefresh() } catch(e) { toast(e.message) }
+  }
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      await apiPatch(`/appointments/${appointmentId}/cancel`)
+      toast('Appointment cancelled.', 'success')
+      onRefresh()
+    } catch (e) {
+      toast(e.message)
+    }
   }
 
   return (
@@ -420,16 +487,16 @@ export function Appointments({ appointments, doctors, onRefresh }) {
             <div key={item.id} className="appt">
               <div className="appt-date"><div className="appt-day">{item.day}</div><div className="appt-mon">{item.mon}</div></div>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{item.doctor}</div><div style={{fontSize:12.5,color:'#64748b'}}>{item.spec} · {item.place}</div></div>
-              <div style={{textAlign:'right'}}><div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{item.time}</div><span className={`badge ${badgeForStatus(item.status)}`}>{item.status}</span></div>
+              <div style={{textAlign:'right'}}><div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{item.time}</div><span className={`badge ${badgeForStatus(item.status)}`}>{item.status}</span>{item.status !== 'cancelled' && <button className="btn btn-secondary btn-sm" style={{marginTop:6}} onClick={() => cancelAppointment(item.id)}>Cancel</button>}</div>
             </div>
           )) : <div className="empty">No appointments yet.</div>}
         </div>
       </div>
-      <div style={{marginTop:12}}><button className="btn btn-primary" onClick={()=>setShowModal(true)}>+ Book appointment</button></div>
+      <div style={{marginTop:12}}><button className="btn btn-primary" onClick={onOpenModal}>+ Book appointment</button></div>
       {showModal&&(
         <div className="modal-overlay">
           <div className="modal">
-            <div className="modal-hd"><h3>Book appointment</h3><button className="modal-close" onClick={()=>setShowModal(false)}>✕</button></div>
+            <div className="modal-hd"><h3>Book appointment</h3><button className="modal-close" onClick={onCloseModal}>✕</button></div>
             <div className="modal-bd">
               <div className="fg"><label>Doctor</label><select value={docId} onChange={e=>{setDocId(e.target.value);loadSlots(e.target.value,date)}}><option value="">Select doctor</option>{doctors.map(d=><option key={d.id} value={d.id}>{d.name}{d.department?' · '+d.department:''}</option>)}</select></div>
               <div className="frow">
@@ -438,7 +505,7 @@ export function Appointments({ appointments, doctors, onRefresh }) {
               </div>
               <div className="fg"><label>Reason</label><textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="Describe your symptoms..."/></div>
             </div>
-            <div className="modal-ft"><button className="btn btn-secondary" onClick={()=>setShowModal(false)}>Cancel</button><button className="btn btn-primary" onClick={submit}>Book</button></div>
+            <div className="modal-ft"><button className="btn btn-secondary" onClick={onCloseModal}>Cancel</button><button className="btn btn-primary" onClick={submit}>Book</button></div>
           </div>
         </div>
       )}
@@ -535,7 +602,8 @@ export function Profile() {
   const save = async () => {
     setLoading(true)
     try {
-      const payload={name:data.name,dob:data.dob||null,phone:data.phone||null,email:data.email||null,address:data.address||null,department:data.department||null,iin:data.iin||null,blood_type:data.blood||null,height:data.height?parseFloat(data.height):null,weight:data.weight?parseFloat(data.weight):null}
+      const clean = (value) => (value === '—' ? '' : String(value || '').trim())
+      const payload={name:clean(data.name),dob:clean(data.dob)||null,phone:clean(data.phone)||null,email:clean(data.email)||null,address:clean(data.address)||null,department:clean(data.department)||null,iin:clean(data.iin)||null,blood_type:clean(data.blood)||null,height:data.height?parseFloat(data.height):null,weight:data.weight?parseFloat(data.weight):null}
       Object.keys(payload).forEach(k=>{if(payload[k]===null&&k!=='height'&&k!=='weight')delete payload[k]})
       await apiPut('/user/'+user.id,payload)
       setContext({...context,user:{...context.user,...payload,name:payload.name||user.name}})
@@ -593,13 +661,18 @@ export function AdminPanel() {
   const [users, setUsers] = useState([])
   const [analyses, setAnalyses] = useState([])
   const [rbac, setRbac] = useState([])
+  const [usersOffset, setUsersOffset] = useState(0)
+  const [analysesOffset, setAnalysesOffset] = useState(0)
+  const pageLimit = 20
   const [form, setForm] = useState({name:'',username:'',password:'',role:'user',email:'',phone:'',department:''})
   const [editPwId, setEditPwId] = useState(null), [newPw, setNewPw] = useState(''), [confPw, setConfPw] = useState('')
   const [editAnId, setEditAnId] = useState(null), [anStatus, setAnStatus] = useState(''), [anNote, setAnNote] = useState(''), [anResults, setAnResults] = useState(''), [anDate, setAnDate] = useState(''), [anVisible, setAnVisible] = useState(true)
 
-  const load = async () => {
-    const [u,a,r]=await Promise.all([apiGet('/admin/users'),apiGet('/admin/analyses'),apiGet('/rbac/model')])
+  const load = async (nextUsersOffset = usersOffset, nextAnalysesOffset = analysesOffset) => {
+    const [u,a,r]=await Promise.all([apiGet('/admin/users', { limit: pageLimit, offset: nextUsersOffset }),apiGet('/admin/analyses', { limit: pageLimit, offset: nextAnalysesOffset }),apiGet('/rbac/model')])
     setUsers((u.users||[]).map(mapUser)); setAnalyses(mapAnalysesList(a.analyses||[])); setRbac(r.roles||[])
+    setUsersOffset(nextUsersOffset)
+    setAnalysesOffset(nextAnalysesOffset)
   }
   useEffect(()=>{load()},[])
 
@@ -665,6 +738,10 @@ export function AdminPanel() {
                   </tr>
                 ))}</tbody>
               </table>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'10px 16px'}}>
+                <button className="btn btn-secondary btn-sm" onClick={() => load(Math.max(0, usersOffset - pageLimit), analysesOffset)} disabled={usersOffset === 0}>Prev</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => load(usersOffset + pageLimit, analysesOffset)} disabled={users.length < pageLimit}>Next</button>
+              </div>
             </div>
           </div>
         </div>
@@ -677,6 +754,10 @@ export function AdminPanel() {
                   <tr key={a.id}><td><div style={{fontWeight:600}}>{a.patientName||'Patient'}</div><div style={{fontSize:12,color:'#64748b'}}>{a.patientUsername||'—'}</div></td><td><div style={{fontWeight:500}}>{a.name}</div><div style={{fontSize:12,color:'#64748b'}}>{a.date||'—'} · {a.doctor||'—'}</div></td><td><span className={`badge ${badgeForStatus(a.status)}`}>{a.status}</span></td><td><button className="btn btn-secondary btn-sm" onClick={()=>openAnEdit(a)}>Update</button></td></tr>
                 ))}{!analyses.length&&<tr><td colSpan="4"><div className="empty">No analyses in the queue.</div></td></tr>}</tbody>
               </table>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'10px 16px'}}>
+                <button className="btn btn-secondary btn-sm" onClick={() => load(usersOffset, Math.max(0, analysesOffset - pageLimit))} disabled={analysesOffset === 0}>Prev</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => load(usersOffset, analysesOffset + pageLimit)} disabled={analyses.length < pageLimit}>Next</button>
+              </div>
             </div>
           </div>
           <div className="card">

@@ -1,5 +1,11 @@
 import { API_BASE, AUTH_STORAGE_KEY } from './utils.jsx'
 
+let unauthorizedHandler = null
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = typeof handler === 'function' ? handler : null
+}
+
 function getToken() {
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY)
@@ -30,10 +36,16 @@ async function request(path, options = {}) {
   let data = {}
   try { data = text ? JSON.parse(text) : {} } catch { data = { detail: text } }
 
-  if (!res.ok) throw new Error(data.detail || 'HTTP ' + res.status)
+  if (!res.ok) {
+    if (res.status === 401 && !options.skipUnauthorizedHandler && unauthorizedHandler) {
+      unauthorizedHandler()
+    }
+    throw new Error(data.detail || 'HTTP ' + res.status)
+  }
   return data
 }
 
-export const apiGet = (path, params, skipAuth) => request(path, { method: 'GET', params, skipAuth })
-export const apiPost = (path, payload, skipAuth) => request(path, { method: 'POST', payload, skipAuth })
-export const apiPut = (path, payload) => request(path, { method: 'PUT', payload })
+export const apiGet = (path, params, skipAuth, extra = {}) => request(path, { method: 'GET', params, skipAuth, ...extra })
+export const apiPost = (path, payload, skipAuth, extra = {}) => request(path, { method: 'POST', payload, skipAuth, ...extra })
+export const apiPut = (path, payload, extra = {}) => request(path, { method: 'PUT', payload, ...extra })
+export const apiPatch = (path, payload, extra = {}) => request(path, { method: 'PATCH', payload, ...extra })

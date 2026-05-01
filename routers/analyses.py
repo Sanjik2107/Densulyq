@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Query
 
 from app_helpers import get_current_user
 from db import get_db
@@ -50,11 +50,15 @@ def doctor_review_analysis(
 
 
 @router.get("/admin/analyses")
-def admin_list_analyses(authorization: Optional[str] = Header(default=None)):
+def admin_list_analyses(
+    authorization: Optional[str] = Header(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+):
     db = get_db()
     try:
         actor = get_current_user(db, authorization)
-        return analyses_service.list_admin_analyses(db, actor)
+        return analyses_service.list_admin_analyses(db, actor, limit=limit, offset=offset)
     finally:
         db.close()
 

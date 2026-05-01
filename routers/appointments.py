@@ -29,3 +29,13 @@ def create_appointment(data: AppointmentCreate, authorization: Optional[str] = H
         return appointments_service.create_appointment(db, actor, data)
     finally:
         db.close()
+
+
+@router.patch("/appointments/{appointment_id}/cancel")
+def cancel_appointment(appointment_id: int, authorization: Optional[str] = Header(default=None)):
+    db = get_db()
+    try:
+        actor = get_current_user(db, authorization)
+        return appointments_service.cancel_appointment(db, actor, appointment_id)
+    finally:
+        db.close()

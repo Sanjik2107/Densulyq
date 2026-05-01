@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { AUTH_STORAGE_KEY } from '../utils.jsx'
-import { apiGet, apiPost } from '../api.js'
+import { apiGet, apiPost, setUnauthorizedHandler } from '../api.js'
 
 const AuthContext = createContext(null)
 
@@ -29,11 +29,22 @@ export function AuthProvider({ children }) {
   const [context, setContext] = useState({ user: null, permissions: [], portal: 'patient' })
   const [loading, setLoading] = useState(true)
 
+  const clearAuthState = () => {
+    clearStoredAuth()
+    setAuthState({ token: '', portal: 'patient', page: '' })
+    setContext({ user: null, permissions: [], portal: 'patient' })
+  }
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => clearAuthState())
+    return () => setUnauthorizedHandler(null)
+  }, [])
+
   useEffect(() => {
     if (!authState.token) { setLoading(false); return }
     apiGet('/auth/me')
       .then(data => setContext(data))
-      .catch(() => { clearStoredAuth(); setAuthState({ token: '', portal: 'patient', page: '' }) })
+      .catch(() => clearAuthState())
       .finally(() => setLoading(false))
   }, [])
 
@@ -56,10 +67,8 @@ export function AuthProvider({ children }) {
   }
 
   const logout = async () => {
-    try { if (authState.token) await apiPost('/auth/logout') } catch {}
-    clearStoredAuth()
-    setAuthState({ token: '', portal: 'patient', page: '' })
-    setContext({ user: null, permissions: [], portal: 'patient' })
+    try { if (authState.token) await apiPost('/auth/logout', undefined, false, { skipUnauthorizedHandler: true }) } catch {}
+    clearAuthState()
   }
 
   const updateStoredPage = (page) => {

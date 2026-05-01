@@ -6,7 +6,14 @@ APP_VERSION = "1.2.0"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 DB_PATH = "medportal.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_PATH = os.path.join(BASE_DIR, "index1.html")
+FRONTEND_DIST_PATH = os.path.join(BASE_DIR, "frontend", "dist", "index.html")
+FRONTEND_DEV_PATH = os.path.join(BASE_DIR, "frontend", "index.html")
+if os.path.exists(FRONTEND_DIST_PATH):
+    FRONTEND_PATH = FRONTEND_DIST_PATH
+elif os.path.exists(FRONTEND_DEV_PATH):
+    FRONTEND_PATH = FRONTEND_DEV_PATH
+else:
+    FRONTEND_PATH = ""
 PASSWORD_SCHEME = "pbkdf2_sha256"
 PASSWORD_ITERATIONS = 390000
 SESSION_TTL_HOURS = max(1, int(os.getenv("SESSION_TTL_HOURS", "24")))

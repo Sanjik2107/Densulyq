@@ -2,84 +2,77 @@
 
 Lightweight medical portal prototype for patient care workflows and role-based clinical access.
 
-## Problem Statement
-
-Many small healthcare teams need a simple internal portal to manage patient records, appointments, analyses, and staff access without setting up a complex enterprise system.  
-This project demonstrates a compact, local-first solution using FastAPI + SQLite, including basic RBAC and AI-assisted health interactions.
-
 ## Features
 
-- Unified authentication flow for `user`, `doctor`, and `admin` roles
-- Patient profile management and role-aware access control
-- Doctor dashboard with assigned-patient visibility
+- Authentication for `user`, `doctor`, and `admin` roles
+- Patient profile and role-aware data access
+- Doctor dashboard with assigned-patient scope checks
 - Appointment booking with 15-minute slot validation
-- Analysis lifecycle management (`assigned -> processing -> ready -> reviewed`)
-- Referral tracking and patient-doctor workflows
-- Session-based authentication with expiration and logout-all
-- AI chat and health score endpoints with safe fallback when `GEMINI_API_KEY` is missing
+- Analysis lifecycle (`assigned -> processing -> ready -> reviewed`)
+- Session-based auth with token persistence and logout-all
+- AI chat and health score endpoints with fallback when `GEMINI_API_KEY` is not configured
 
 ## Technology Stack
 
-- Python 3.10+
-- FastAPI
-- Uvicorn
-- SQLite
-- Pydantic
-- HTTPX
-- HTML/CSS/Vanilla JavaScript frontend
+- Backend: Python 3.10+, FastAPI, Uvicorn, SQLite, Pydantic, HTTPX
+- Frontend: React + Vite
 
 ## Project Structure
 
 ```text
-project-root/
-├── src/            # FastAPI backend + frontend page
-├── docs/           # Documentation artifacts
-├── tests/          # Test suite (placeholder)
-├── assets/         # Static assets (icons, images)
-├── README.md
-├── AUDIT.md
-├── requirements.txt
-├── .gitignore
-└── LICENSE
+Densulyq/
+├── src/main.py          # FastAPI entrypoint
+├── routers/             # API routers
+├── services/            # Business logic
+├── frontend/            # React app (Vite)
+├── tests/               # Backend tests
+├── config.py            # Runtime config (DB, frontend path, auth settings)
+├── db.py                # DB initialization and helpers
+├── requirements.txt     # Python dependencies
+└── README.md
 ```
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Sanjik2107/Densulyq.git
-   cd Densulyq
-   ```
-2. (Optional) Create and activate a virtual environment.
-3. Install dependencies:
+1. (Optional) Create and activate a virtual environment.
+2. Install backend dependencies:
    ```bash
    python3 -m pip install -r requirements.txt
    ```
-4. Set your Gemini API key (optional but recommended for AI features):
+3. Install frontend dependencies:
+   ```bash
+   cd frontend
+   npm install
+   cd ..
+   ```
+4. Set your Gemini API key (optional):
    ```bash
    export GEMINI_API_KEY="your_api_key_here"
    ```
 
-## Usage
+## Run (Recommended)
 
-1. Start the app:
+1. Build frontend:
+   ```bash
+   cd frontend && npm run build && cd ..
+   ```
+2. Start backend:
    ```bash
    python3 src/main.py
    ```
-2. Open:
+3. Open:
    - App: `http://localhost:8000`
    - API docs: `http://localhost:8000/docs`
-3. Log in with demo accounts:
-   - `patient-demo / patient123`
-   - `doctor-demo / doctor123`
-   - `admin-demo / admin123`
 
-## Screenshots
+`/` serves `frontend/dist/index.html` if it exists, otherwise falls back to `frontend/index.html`.
 
-- Main UI screenshot can be added under `docs/screenshots/` and referenced here for presentation/readability.
-- Current repository includes UI asset files but does not yet include dedicated screenshot captures.
+## Demo Accounts
+
+- `patient-demo / patient123`
+- `doctor-demo / doctor123`
+- `admin-demo / admin123`
 
 ## Notes
 
-- Database file is generated at runtime (`medportal.db`) and should not be version-controlled.
-- This is a prototype for educational/demo purposes and should be hardened before production use.
+- Local DB file is `medportal.db`.
+- This is an educational prototype and should be hardened before production use.

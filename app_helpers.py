@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import json
 import secrets
 import sqlite3
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Union
 
 from fastapi import HTTPException
 
@@ -118,11 +118,13 @@ def generate_booking_slots():
 
 def get_doctor_booked_slots(db: sqlite3.Connection, doctor_user_id: int, date_iso: str):
     rows = db.execute(
-        "SELECT date, time FROM appointments WHERE doctor_user_id=?",
+        "SELECT date, time, status FROM appointments WHERE doctor_user_id=?",
         (doctor_user_id,),
     ).fetchall()
     occupied = set()
     for row in rows:
+        if normalize_optional_string(row["status"]) == "отменено":
+            continue
         normalized_date = try_normalize_calendar_date(row["date"])
         normalized_time = try_normalize_slot_time(row["time"])
         if normalized_date == date_iso and normalized_time:
@@ -131,8 +133,10 @@ def get_doctor_booked_slots(db: sqlite3.Connection, doctor_user_id: int, date_is
 
 
 def patient_has_slot_conflict(db: sqlite3.Connection, user_id: int, date_iso: str, time_hhmm: str):
-    rows = db.execute("SELECT date, time FROM appointments WHERE user_id=?", (user_id,)).fetchall()
+    rows = db.execute("SELECT date, time, status FROM appointments WHERE user_id=?", (user_id,)).fetchall()
     for row in rows:
+        if normalize_optional_string(row["status"]) == "отменено":
+            continue
         if try_normalize_calendar_date(row["date"]) == date_iso and try_normalize_slot_time(row["time"]) == time_hhmm:
             return True
     return False
@@ -171,12 +175,18 @@ def is_doctor_assigned_to_patient(db: sqlite3.Connection, doctor_user_id: int, p
         """
         SELECT 1
         FROM appointments
-        WHERE doctor_user_id=? AND user_id=?
+        WHERE doctor_user_id=? AND user_id=? AND COALESCE(status, '')!='отменено'
         LIMIT 1
         """,
         (doctor_user_id, patient_user_id),
     ).fetchone()
     return bool(row)
+
+
+def parse_pagination(limit: int, offset: int, *, max_limit: int = 200):
+    safe_limit = max(1, min(int(limit), max_limit))
+    safe_offset = max(0, int(offset))
+    return safe_limit, safe_offset
 
 
 def require_user_scope(
@@ -374,7 +384,7 @@ def parse_analysis_results(raw_results: Any):
         return []
 
 
-def normalize_analysis_date_for_display(row: sqlite3.Row | dict[str, Any]):
+def normalize_analysis_date_for_display(row: Union[sqlite3.Row, Dict[str, Any]]):
     for key in ("ready_at", "scheduled_for", "date", "ordered_at"):
         value = row[key] if isinstance(row, sqlite3.Row) else row.get(key)
         if not value:

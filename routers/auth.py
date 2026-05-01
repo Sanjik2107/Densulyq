@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Request
 
 from app_helpers import extract_token, get_current_user
 from db import get_db
@@ -12,10 +12,14 @@ router = APIRouter(tags=["auth"])
 
 
 @router.post("/auth/login")
-def auth_login(data: AuthLogin):
+def auth_login(data: AuthLogin, request: Request):
+    forwarded_for = request.headers.get("x-forwarded-for", "")
+    client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else ""
+    if not client_ip:
+        client_ip = request.client.host if request.client else ""
     db = get_db()
     try:
-        return auth_service.login(db, data)
+        return auth_service.login(db, data, client_ip=client_ip)
     finally:
         db.close()
 

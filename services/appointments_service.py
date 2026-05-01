@@ -16,7 +16,10 @@ from schemas import AppointmentCreate
 
 def get_user_appointments(db, actor, user_id: int):
     require_user_scope(db, actor, user_id, cross_user_permission="users:read")
-    rows = db.execute("SELECT * FROM appointments WHERE user_id=? ORDER BY date", (user_id,)).fetchall()
+    rows = db.execute(
+        "SELECT * FROM appointments WHERE user_id=? ORDER BY date, time, id",
+        (user_id,),
+    ).fetchall()
     return [dict(row) for row in rows]
 
 
@@ -63,3 +66,24 @@ def create_appointment(db, actor, data: AppointmentCreate):
     db.commit()
     new_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
     return {"id": new_id, "status": "created"}
+
+
+def cancel_appointment(db, actor, appointment_id: int):
+    appointment = db.execute("SELECT * FROM appointments WHERE id=?", (appointment_id,)).fetchone()
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+    status = (appointment["status"] or "").strip().lower()
+    if status == "отменено":
+        return {"status": "cancelled"}
+    if actor["role"] == "admin":
+        pass
+    elif actor["role"] == "doctor":
+        if appointment["doctor_user_id"] != actor["id"]:
+            raise HTTPException(status_code=403, detail="Доктор может отменять только свои записи")
+    elif actor["id"] == appointment["user_id"]:
+        pass
+    else:
+        raise HTTPException(status_code=403, detail="Недостаточно прав для отмены записи")
+    db.execute("UPDATE appointments SET status='отменено' WHERE id=?", (appointment_id,))
+    db.commit()
+    return {"status": "cancelled"}

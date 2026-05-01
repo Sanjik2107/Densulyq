@@ -1,14 +1,26 @@
 from fastapi import HTTPException
 
-from app_helpers import get_user_or_404, require_permission, serialize_user, validate_role
+from app_helpers import (
+    get_user_or_404,
+    normalize_optional_string,
+    parse_pagination,
+    require_permission,
+    serialize_user,
+    validate_iin,
+    validate_name,
+    validate_password,
+    validate_role,
+    validate_username,
+)
 from schemas import AdminUserCreate, AdminUserUpdate, model_dump
 from security import hash_password
 
 
-def list_users(db, actor):
+def list_users(db, actor, *, limit: int = 50, offset: int = 0):
     if actor["role"] != "admin":
         raise HTTPException(status_code=403, detail="Админ панель доступна только администраторам")
     require_permission(db, actor, "users:read")
+    limit, offset = parse_pagination(limit, offset)
     rows = db.execute(
         """
         SELECT *
@@ -18,7 +30,10 @@ def list_users(db, actor):
             WHEN role='doctor' THEN 1
             ELSE 2
         END, created_at DESC, id DESC
+        LIMIT ? OFFSET ?
         """
+        ,
+        (limit, offset),
     ).fetchall()
     stats = db.execute(
         """
@@ -31,15 +46,16 @@ def list_users(db, actor):
         FROM users
         """
     ).fetchone()
-    return {"users": [serialize_user(row) for row in rows], "stats": dict(stats)}
+    return {"users": [serialize_user(row) for row in rows], "stats": dict(stats), "limit": limit, "offset": offset}
 
 
 def create_user(db, actor, data: AdminUserCreate):
     require_permission(db, actor, "users:create")
+    name = validate_name(data.name)
+    username = validate_username(data.username)
+    password = validate_password(data.password)
     role = validate_role(data.role)
-    if not data.password.strip():
-        raise HTTPException(status_code=400, detail="Пароль обязателен")
-    existing = db.execute("SELECT id FROM users WHERE username=?", (data.username,)).fetchone()
+    existing = db.execute("SELECT id FROM users WHERE username=?", (username,)).fetchone()
     if existing:
         raise HTTPException(status_code=400, detail="Username уже используется")
     db.execute(
@@ -51,19 +67,19 @@ def create_user(db, actor, data: AdminUserCreate):
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
         """,
         (
-            data.name,
-            data.username,
-            hash_password(data.password),
-            data.iin,
-            data.dob,
-            data.blood_type,
-            data.phone,
-            data.email,
-            data.address,
+            name,
+            username,
+            hash_password(password),
+            validate_iin(data.iin),
+            normalize_optional_string(data.dob),
+            normalize_optional_string(data.blood_type),
+            normalize_optional_string(data.phone),
+            normalize_optional_string(data.email),
+            normalize_optional_string(data.address),
             data.height,
             data.weight,
             role,
-            data.department,
+            normalize_optional_string(data.department),
         ),
     )
     db.commit()
@@ -74,6 +90,7 @@ def create_user(db, actor, data: AdminUserCreate):
 
 def update_user(db, actor, user_id: int, data: AdminUserUpdate):
     require_permission(db, actor, "users:update")
+    current = get_user_or_404(db, user_id)
     fields = model_dump(data)
     if "role" in fields:
         fields["role"] = validate_role(fields["role"])
@@ -84,9 +101,21 @@ def update_user(db, actor, user_id: int, data: AdminUserUpdate):
         if not password.strip():
             raise HTTPException(status_code=400, detail="Пароль не может быть пустым")
         fields["password_hash"] = hash_password(password)
+    for key in ("department", "email", "phone", "address"):
+        if key in fields:
+            fields[key] = normalize_optional_string(fields[key])
     if not fields:
         raise HTTPException(status_code=400, detail="Нет данных для обновления")
-    get_user_or_404(db, user_id)
+    if current["role"] == "admin":
+        next_role = fields.get("role", current["role"])
+        next_active = fields.get("is_active", current["is_active"])
+        if next_role != "admin" or int(next_active) == 0:
+            active_admins = db.execute(
+                "SELECT COUNT(*) FROM users WHERE role='admin' AND is_active=1 AND id<>?",
+                (user_id,),
+            ).fetchone()[0]
+            if active_admins == 0:
+                raise HTTPException(status_code=400, detail="Нельзя деактивировать или понизить последнего активного администратора")
     set_clause = ", ".join(f"{column}=?" for column in fields)
     db.execute(f"UPDATE users SET {set_clause} WHERE id=?", (*fields.values(), user_id))
     db.commit()

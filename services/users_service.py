@@ -8,6 +8,7 @@ from app_helpers import (
     get_permissions,
     normalize_calendar_date,
     normalize_optional_string,
+    parse_pagination,
     require_permission,
     require_user_scope,
     serialize_user,
@@ -134,8 +135,9 @@ def get_referrals(db, actor, user_id: int):
     return [dict(row) for row in rows]
 
 
-def list_doctor_patients(db, actor):
+def list_doctor_patients(db, actor, *, limit: int = 50, offset: int = 0):
     require_permission(db, actor, "users:read")
+    limit, offset = parse_pagination(limit, offset)
     if actor["role"] == "admin":
         patient_rows = db.execute(
             """
@@ -143,7 +145,10 @@ def list_doctor_patients(db, actor):
             FROM users
             WHERE role='user'
             ORDER BY name COLLATE NOCASE, id
+            LIMIT ? OFFSET ?
             """
+            ,
+            (limit, offset),
         ).fetchall()
     elif actor["role"] == "doctor":
         patient_rows = db.execute(
@@ -151,10 +156,11 @@ def list_doctor_patients(db, actor):
             SELECT DISTINCT users.*
             FROM users
             JOIN appointments ON appointments.user_id = users.id
-            WHERE users.role='user' AND appointments.doctor_user_id=?
+            WHERE users.role='user' AND appointments.doctor_user_id=? AND COALESCE(appointments.status, '')!='отменено'
             ORDER BY users.name COLLATE NOCASE, users.id
+            LIMIT ? OFFSET ?
             """,
-            (actor["id"],),
+            (actor["id"], limit, offset),
         ).fetchall()
     else:
         raise HTTPException(status_code=403, detail="Доступ только для doctor или admin")
@@ -201,6 +207,8 @@ def list_doctor_patients(db, actor):
 
     return {
         "patients": patients,
+        "limit": limit,
+        "offset": offset,
         "stats": {
             "total_patients": len(patients),
             "ready_analyses": total_ready_analyses,

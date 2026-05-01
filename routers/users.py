@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Query
 
 from app_helpers import get_current_user
 from db import get_db
@@ -82,10 +82,14 @@ def get_referrals(user_id: int, authorization: Optional[str] = Header(default=No
 
 
 @router.get("/doctor/patients")
-def doctor_list_patients(authorization: Optional[str] = Header(default=None)):
+def doctor_list_patients(
+    authorization: Optional[str] = Header(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+):
     db = get_db()
     try:
         actor = get_current_user(db, authorization)
-        return users_service.list_doctor_patients(db, actor)
+        return users_service.list_doctor_patients(db, actor, limit=limit, offset=offset)
     finally:
         db.close()

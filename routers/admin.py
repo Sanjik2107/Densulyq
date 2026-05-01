@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Query
 
 from app_helpers import get_current_user
 from db import get_db
@@ -12,11 +12,15 @@ router = APIRouter(tags=["admin"])
 
 
 @router.get("/admin/users")
-def admin_list_users(authorization: Optional[str] = Header(default=None)):
+def admin_list_users(
+    authorization: Optional[str] = Header(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+):
     db = get_db()
     try:
         actor = get_current_user(db, authorization)
-        return admin_service.list_users(db, actor)
+        return admin_service.list_users(db, actor, limit=limit, offset=offset)
     finally:
         db.close()
 

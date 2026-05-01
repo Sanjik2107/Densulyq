@@ -8,6 +8,7 @@ from app_helpers import (
     normalize_analysis_status,
     normalize_calendar_date,
     normalize_optional_string,
+    parse_pagination,
     parse_analysis_results,
     require_permission,
     require_user_scope,
@@ -17,6 +18,13 @@ from app_helpers import (
 )
 from config import ANALYSIS_READY_STATUSES, ANALYSIS_STATUS_ORDERED, ANALYSIS_STATUS_READY, ANALYSIS_STATUS_REVIEWED
 from schemas import AnalysisLabUpdate, AnalysisOrderCreate, AnalysisReviewUpdate
+
+ALLOWED_ANALYSIS_TRANSITIONS = {
+    "назначен": {"назначен", "в обработке"},
+    "в обработке": {"в обработке", "готово"},
+    "готово": {"готово", "проверено"},
+    "проверено": {"проверено"},
+}
 
 
 def get_user_analyses(db, actor, user_id: int):
@@ -87,6 +95,8 @@ def doctor_review(db, actor, analysis_id: int, data: AnalysisReviewUpdate):
     if analysis["doctor_user_id"] and analysis["doctor_user_id"] != actor["id"]:
         raise HTTPException(status_code=403, detail="Этот анализ назначен другим доктором")
     require_user_scope(db, actor, analysis["user_id"], cross_user_permission="users:read")
+    if analysis["status"] == ANALYSIS_STATUS_REVIEWED:
+        raise HTTPException(status_code=400, detail="Анализ уже проверен доктором")
     if analysis["status"] not in ANALYSIS_READY_STATUSES:
         raise HTTPException(status_code=400, detail="Доктор может проверять только готовый анализ")
     reviewed_at = datetime.now().date().isoformat()
@@ -108,10 +118,11 @@ def doctor_review(db, actor, analysis_id: int, data: AnalysisReviewUpdate):
     return {"status": "reviewed", "analysis": serialize_analysis_row(updated)}
 
 
-def list_admin_analyses(db, actor):
+def list_admin_analyses(db, actor, *, limit: int = 50, offset: int = 0):
     if actor["role"] != "admin":
         raise HTTPException(status_code=403, detail="Очередь анализов доступна только администратору")
     require_permission(db, actor, "analyses:manage")
+    limit, offset = parse_pagination(limit, offset)
     rows = db.execute(
         """
         SELECT
@@ -129,7 +140,10 @@ def list_admin_analyses(db, actor):
             END,
             COALESCE(analyses.ready_at, analyses.scheduled_for, analyses.date, analyses.ordered_at, analyses.created_at) DESC,
             analyses.id DESC
+        LIMIT ? OFFSET ?
         """
+        ,
+        (limit, offset),
     ).fetchall()
     analyses = []
     for row in rows:
@@ -137,7 +151,7 @@ def list_admin_analyses(db, actor):
         analysis["patient_name"] = row["patient_name"]
         analysis["patient_username"] = row["patient_username"]
         analyses.append(analysis)
-    return {"analyses": analyses}
+    return {"analyses": analyses, "limit": limit, "offset": offset}
 
 
 def update_admin_analysis(db, actor, analysis_id: int, data: AnalysisLabUpdate):
@@ -146,6 +160,10 @@ def update_admin_analysis(db, actor, analysis_id: int, data: AnalysisLabUpdate):
     require_permission(db, actor, "analyses:manage")
     analysis = get_analysis_or_404(db, analysis_id)
     status = normalize_analysis_status(data.status)
+    current_status = analysis["status"]
+    allowed_statuses = ALLOWED_ANALYSIS_TRANSITIONS.get(current_status, {current_status})
+    if status not in allowed_statuses:
+        raise HTTPException(status_code=400, detail="Недопустимый переход статуса анализа")
     existing_results = parse_analysis_results(analysis["results"])
     incoming_results = sanitize_analysis_results(data.results) if data.results is not None else existing_results
     updates = {

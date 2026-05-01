@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+from threading import Lock
+
 from fastapi import HTTPException
 
 from app_helpers import (
@@ -14,15 +17,64 @@ from app_helpers import (
 from schemas import AuthLogin, AuthRegister
 from security import hash_password, verify_password
 
+LOGIN_WINDOW_SECONDS = 300
+LOGIN_MAX_ATTEMPTS = 6
+_LOGIN_ATTEMPTS = {}
+_LOGIN_LOCK = Lock()
 
-def login(db, data: AuthLogin):
+
+def _rate_limit_key(username: str, client_ip: str):
+    return f"{username.lower()}|{client_ip or 'unknown'}"
+
+
+def _enforce_login_rate_limit(username: str, client_ip: str):
+    now = datetime.utcnow()
+    key = _rate_limit_key(username, client_ip)
+    with _LOGIN_LOCK:
+        entry = _LOGIN_ATTEMPTS.get(key)
+        if not entry:
+            return
+        if now - entry["first_attempt"] > timedelta(seconds=LOGIN_WINDOW_SECONDS):
+            _LOGIN_ATTEMPTS.pop(key, None)
+            return
+        if entry["count"] >= LOGIN_MAX_ATTEMPTS:
+            remaining = int(
+                LOGIN_WINDOW_SECONDS - (now - entry["first_attempt"]).total_seconds()
+            )
+            raise HTTPException(
+                status_code=429,
+                detail=f"Слишком много попыток входа. Повторите через {max(1, remaining)} сек.",
+            )
+
+
+def _register_failed_login(username: str, client_ip: str):
+    now = datetime.utcnow()
+    key = _rate_limit_key(username, client_ip)
+    with _LOGIN_LOCK:
+        entry = _LOGIN_ATTEMPTS.get(key)
+        if not entry or now - entry["first_attempt"] > timedelta(seconds=LOGIN_WINDOW_SECONDS):
+            _LOGIN_ATTEMPTS[key] = {"count": 1, "first_attempt": now}
+            return
+        entry["count"] += 1
+
+
+def _clear_failed_logins(username: str, client_ip: str):
+    key = _rate_limit_key(username, client_ip)
+    with _LOGIN_LOCK:
+        _LOGIN_ATTEMPTS.pop(key, None)
+
+
+def login(db, data: AuthLogin, *, client_ip: str = ""):
     username = data.username.strip()
     if not username or not data.password:
         raise HTTPException(status_code=400, detail="Введите username и пароль")
+    _enforce_login_rate_limit(username, client_ip)
 
     user = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
     if not user or not verify_password(data.password, user["password_hash"]):
+        _register_failed_login(username, client_ip)
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
+    _clear_failed_logins(username, client_ip)
 
     ensure_active(user)
 
