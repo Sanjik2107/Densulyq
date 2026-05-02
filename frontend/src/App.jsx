@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './context/AuthContext.jsx'
 import { useToast } from './context/ToastContext.jsx'
 import Sidebar from './components/Sidebar.jsx'
@@ -21,32 +21,18 @@ export default function App() {
     try { return localStorage.getItem('densaulyq-theme') || 'light' } catch { return 'light' }
   })
   const [patientData, setPatientData] = useState({ analyses: [], appointments: [], referrals: [], doctors: [] })
-  const [dataLoading, setDataLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [doctorRefresh, setDoctorRefresh] = useState(() => async () => {})
+  const userId = user?.id
 
-  useEffect(() => {
-    if (authState.page) setPage(authState.page)
-  }, [authState.page])
-
-  useEffect(() => {
-    document.body.dataset.theme = theme
-    try { localStorage.setItem('densaulyq-theme', theme) } catch {}
-  }, [theme])
-
-  useEffect(() => {
-    if (!isAuthenticated || !user) return
-    if (isPatient) loadPatientData()
-  }, [isAuthenticated, user?.id])
-
-  const loadPatientData = async () => {
-    setDataLoading(true)
+  const loadPatientData = useCallback(async () => {
+    if (!userId) return
     try {
-      const [u, an, ap, rf, dr] = await Promise.all([
-        apiGet('/user/' + user.id),
-        apiGet('/analyses/' + user.id),
-        apiGet('/appointments/' + user.id),
-        apiGet('/referrals/' + user.id),
+      const [, an, ap, rf, dr] = await Promise.all([
+        apiGet('/user/' + userId),
+        apiGet('/analyses/' + userId),
+        apiGet('/appointments/' + userId),
+        apiGet('/referrals/' + userId),
         apiGet('/doctors'),
       ])
       setPatientData({
@@ -57,10 +43,22 @@ export default function App() {
       })
     } catch (e) {
       toast(e.message || 'Failed to load patient data.')
-    } finally {
-      setDataLoading(false)
     }
-  }
+  }, [toast, userId])
+
+  useEffect(() => {
+    if (authState.page) setPage(authState.page)
+  }, [authState.page])
+
+  useEffect(() => {
+    document.body.dataset.theme = theme
+    try { localStorage.setItem('densaulyq-theme', theme) } catch { return }
+  }, [theme])
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return
+    if (isPatient) loadPatientData()
+  }, [isAuthenticated, isPatient, loadPatientData, user])
 
   const navigate = (id) => {
     setPage(id)

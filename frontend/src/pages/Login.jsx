@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { useToast } from '../context/ToastContext.jsx'
 
 export default function Login() {
   const { login, register } = useAuth()
-  const toast = useToast()
   const [view, setView] = useState('login')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)

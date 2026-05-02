@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { AUTH_STORAGE_KEY } from '../utils.jsx'
 import { apiGet, apiPost, setUnauthorizedHandler } from '../api.js'
 
@@ -17,11 +17,11 @@ function getStoredAuth() {
 }
 
 function setStoredAuth(state) {
-  try { localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state)) } catch {}
+  try { localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state)) } catch { return }
 }
 
 function clearStoredAuth() {
-  try { localStorage.removeItem(AUTH_STORAGE_KEY) } catch {}
+  try { localStorage.removeItem(AUTH_STORAGE_KEY) } catch { return }
 }
 
 export function AuthProvider({ children }) {
@@ -29,16 +29,16 @@ export function AuthProvider({ children }) {
   const [context, setContext] = useState({ user: null, permissions: [], portal: 'patient' })
   const [loading, setLoading] = useState(true)
 
-  const clearAuthState = () => {
+  const clearAuthState = useCallback(() => {
     clearStoredAuth()
     setAuthState({ token: '', portal: 'patient', page: '' })
     setContext({ user: null, permissions: [], portal: 'patient' })
-  }
+  }, [])
 
   useEffect(() => {
     setUnauthorizedHandler(() => clearAuthState())
     return () => setUnauthorizedHandler(null)
-  }, [])
+  }, [clearAuthState])
 
   useEffect(() => {
     if (!authState.token) { setLoading(false); return }
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
       .then(data => setContext(data))
       .catch(() => clearAuthState())
       .finally(() => setLoading(false))
-  }, [])
+  }, [authState.token, clearAuthState])
 
   const login = async (username, password) => {
     const data = await apiPost('/auth/login', { username, password }, true)
@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
   }
 
   const logout = async () => {
-    try { if (authState.token) await apiPost('/auth/logout', undefined, false, { skipUnauthorizedHandler: true }) } catch {}
+    try { if (authState.token) await apiPost('/auth/logout', undefined, false, { skipUnauthorizedHandler: true }) } catch { /* Clear local session even if server logout fails. */ }
     clearAuthState()
   }
 

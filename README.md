@@ -14,8 +14,9 @@ Lightweight medical portal prototype for patient care workflows and role-based c
 
 ## Technology Stack
 
-- Backend: Python 3.10+, FastAPI, Uvicorn, PostgreSQL/SQLite, Pydantic, HTTPX
+- Backend: Python 3.10+, FastAPI, Uvicorn, PostgreSQL/SQLite, Alembic, Pydantic, HTTPX
 - Frontend: React + Vite
+- E2E: Playwright
 
 ## Project Structure
 
@@ -24,7 +25,10 @@ Densulyq/
 ├── src/main.py          # FastAPI entrypoint
 ├── routers/             # API routers
 ├── services/            # Business logic
+├── alembic/             # PostgreSQL migrations
 ├── frontend/            # React app (Vite)
+│   ├── src/pages/portal # Split role/workflow pages
+│   └── e2e/             # Playwright browser tests
 ├── tests/               # Backend tests
 ├── config.py            # Runtime config (DB, frontend path, auth settings)
 ├── db.py                # DB initialization and helpers
@@ -75,6 +79,8 @@ Docker Compose starts:
 - `app`: FastAPI backend with the built React frontend
 - `postgres`: PostgreSQL 16 with a persistent `postgres_data` volume
 
+The app container runs `python -m alembic upgrade head` before Uvicorn starts, so schema migrations are applied automatically during Docker deploys.
+
 ### Local Python/Node
 
 1. Build frontend:
@@ -100,9 +106,18 @@ Docker Compose starts:
 ## Database
 
 - Production data should live in PostgreSQL via `DATABASE_URL`/`POSTGRES_URL`.
-- Tables and indexes are created idempotently on startup with `CREATE TABLE IF NOT EXISTS`.
-- Demo accounts are seeded only when missing; existing application data is not wiped on deploy.
+- PostgreSQL schema is managed by Alembic migrations.
+- Startup still runs idempotent compatibility checks and seeds demo accounts only when missing, so existing application data is not wiped on deploy.
 - Local fallback DB file is `medportal.db` and is ignored by git.
 - This is an educational prototype and should be hardened before production use.
+
+## Quality Checks
+
+```bash
+python3 -m unittest discover -s tests
+python3 -m py_compile db.py config.py app_helpers.py security.py schemas.py src/main.py routers/*.py services/*.py alembic/env.py alembic/versions/*.py
+cd frontend && npm run lint && npm run build && npm run e2e
+docker compose up -d --build
+```
 
 Full architecture and module documentation: [`PROJECT.md`](PROJECT.md).

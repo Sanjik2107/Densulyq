@@ -12,11 +12,11 @@ The project is a single FastAPI backend that can also serve the built React fron
 
 ## Technology Stack
 
-- Backend: Python, FastAPI, Uvicorn, Pydantic, HTTPX.
+- Backend: Python, FastAPI, Uvicorn, Pydantic, HTTPX, Alembic.
 - Database: PostgreSQL in Docker/production, SQLite as local fallback.
 - PostgreSQL driver: `psycopg`.
 - Frontend: React, Vite.
-- Tests: Python `unittest`.
+- Tests: Python `unittest`, frontend lint/build checks, Playwright e2e.
 - Container runtime: Docker and Docker Compose.
 
 ## One-Command Run
@@ -30,7 +30,7 @@ This starts:
 - `postgres`: PostgreSQL 16 with persistent Docker volume `postgres_data`.
 - `app`: FastAPI app on `http://localhost:8000`.
 
-The backend initializes tables and seed demo accounts on startup. It does not wipe existing data.
+The app container applies Alembic migrations before Uvicorn starts. The backend then runs idempotent compatibility checks and seeds demo accounts only when they are missing. Existing data is not wiped.
 
 ## Demo Accounts
 
@@ -53,7 +53,8 @@ Important environment variables:
 
 - `src/main.py`: FastAPI app, middleware, router registration, health endpoint, frontend serving.
 - `config.py`: environment configuration, app constants, frontend paths, role permissions.
-- `db.py`: database connection layer, schema initialization, seed data, PostgreSQL/SQLite compatibility helpers.
+- `db.py`: database connection layer, seed data, idempotent compatibility checks, PostgreSQL/SQLite helpers.
+- `alembic/`: formal PostgreSQL migration history.
 - `schemas.py`: Pydantic request models.
 - `security.py`: password hashing and verification.
 - `app_helpers.py`: shared validation, auth/session helpers, permission checks, serializers, date/time normalization.
@@ -115,11 +116,13 @@ PostgreSQL schema includes primary keys, foreign keys, indexes, and a unique act
 - `frontend/src/main.jsx`: React entrypoint.
 - `frontend/src/App.jsx`: authenticated app shell and initial data loading.
 - `frontend/src/pages/Login.jsx`: login and patient registration screen.
-- `frontend/src/pages/Pages.jsx`: patient, doctor, admin, profile, analyses, appointments, and AI views.
+- `frontend/src/pages/Pages.jsx`: compatibility re-export for portal pages.
+- `frontend/src/pages/portal/`: split patient, doctor, admin, profile, analyses, appointments, referrals, and AI views.
 - `frontend/src/api.js`: fetch wrapper with auth token and 401 handling.
 - `frontend/src/utils.jsx`: mapping, formatting, translations, frontend constants.
 - `frontend/src/context/AuthContext.jsx`: auth state, login/register/logout, session restore.
 - `frontend/src/context/ToastContext.jsx`: user notifications.
+- `frontend/e2e/`: Playwright browser scenarios for patient booking, doctor patient selection, and admin analysis editing.
 
 ## Deployment Notes
 
@@ -130,7 +133,8 @@ For hosted deployment:
 1. Create a PostgreSQL database with a persistent connection URL.
 2. Set `DATABASE_URL` or provider-specific Postgres env variable.
 3. Build the frontend with `npm run build`.
-4. Run the backend with `uvicorn src.main:app`.
+4. Run `python -m alembic upgrade head`.
+5. Run the backend with `uvicorn src.main:app`.
 
 The backend serves `frontend/dist/index.html` and `/assets/*` when the build exists.
 
@@ -140,13 +144,13 @@ Useful commands:
 
 ```bash
 python3 -m unittest discover -s tests
-python3 -m py_compile db.py config.py app_helpers.py services/*.py src/main.py
-cd frontend && npm run build
-docker compose up --build
+python3 -m py_compile db.py config.py app_helpers.py security.py schemas.py src/main.py routers/*.py services/*.py alembic/env.py alembic/versions/*.py
+cd frontend && npm run lint && npm run build && npm run e2e
+docker compose up -d --build
 ```
 
 ## Current Design Decisions
 
 - SQLite remains only as a local fallback, not as production storage.
-- Schema initialization is idempotent for simple deploys and coursework-style demos.
-- For a larger production system, the next logical step would be formal migrations with Alembic.
+- Alembic is the formal PostgreSQL schema path.
+- Idempotent startup compatibility checks remain as a safety net for local demos and older databases.

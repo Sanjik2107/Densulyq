@@ -85,14 +85,14 @@ def cancel_appointment(db, actor, appointment_id: int):
     status = (appointment["status"] or "").strip().lower()
     if status == "отменено":
         return {"status": "cancelled"}
-    if actor["role"] == "admin":
-        pass
-    elif actor["role"] == "doctor":
-        if appointment["doctor_user_id"] != actor["id"]:
+    allowed = actor["role"] == "admin"
+    if actor["role"] == "doctor":
+        allowed = appointment["doctor_user_id"] == actor["id"]
+        if not allowed:
             raise HTTPException(status_code=403, detail="Доктор может отменять только свои записи")
-    elif actor["id"] == appointment["user_id"]:
-        pass
-    else:
+    if actor["id"] == appointment["user_id"]:
+        allowed = True
+    if not allowed:
         raise HTTPException(status_code=403, detail="Недостаточно прав для отмены записи")
     db.execute("UPDATE appointments SET status='отменено' WHERE id=?", (appointment_id,))
     db.commit()

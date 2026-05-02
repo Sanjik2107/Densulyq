@@ -33,8 +33,9 @@ async function request(path, options = {}) {
   })
 
   const text = await res.text()
-  let data = {}
-  try { data = text ? JSON.parse(text) : {} } catch { data = { detail: text } }
+  const data = (() => {
+    try { return text ? JSON.parse(text) : {} } catch { return { detail: text } }
+  })()
 
   if (!res.ok) {
     if (res.status === 401 && !options.skipUnauthorizedHandler && unauthorizedHandler) {

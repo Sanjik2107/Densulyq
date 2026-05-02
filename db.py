@@ -257,13 +257,6 @@ def init_postgres_db(conn):
         WHERE COALESCE(status, '') != 'отменено'
         """
     )
-    c.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_appointments_doctor_slot_active
-        ON appointments(doctor_user_id, date, time)
-        WHERE COALESCE(status, '') != 'отменено'
-        """
-    )
 
     c.execute(
         """
