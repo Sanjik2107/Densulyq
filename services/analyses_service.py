@@ -35,7 +35,7 @@ def get_user_analyses(db, actor, user_id: int):
         SELECT *
         FROM analyses
         WHERE user_id=?
-        ORDER BY COALESCE(ready_at, scheduled_for, date, ordered_at, created_at) DESC, id DESC
+        ORDER BY COALESCE(ready_at, scheduled_for, date, ordered_at, CAST(created_at AS TEXT)) DESC, id DESC
         """,
         (user_id,),
     ).fetchall()
@@ -139,7 +139,7 @@ def list_admin_analyses(db, actor, *, limit: int = 50, offset: int = 0):
                 WHEN 'готово' THEN 2
                 ELSE 3
             END,
-            COALESCE(analyses.ready_at, analyses.scheduled_for, analyses.date, analyses.ordered_at, analyses.created_at) DESC,
+            COALESCE(analyses.ready_at, analyses.scheduled_for, analyses.date, analyses.ordered_at, CAST(analyses.created_at AS TEXT)) DESC,
             analyses.id DESC
         LIMIT ? OFFSET ?
         """

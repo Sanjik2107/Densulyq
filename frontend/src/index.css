@@ -27,6 +27,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .main{margin-left:230px;flex:1;display:flex;flex-direction:column}
 .topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .topbar h1{font-size:17px;font-weight:700;letter-spacing:-0.2px}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.theme-toggle{padding:7px 12px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
+.theme-toggle:hover{background:#f1f5f9}
 .content{padding:24px 28px;flex:1}
 
 .btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.13s;font-family:inherit}
@@ -64,6 +67,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tbl td{padding:11px 14px;border-bottom:1px solid #f8fafc;font-size:13.5px}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tr:hover td{background:#f8fafc}
+.tbl tr.active-row td{background:#eff6ff}
 
 .appt{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid #f1f5f9}
 .appt:last-child{border-bottom:none}
@@ -199,3 +203,74 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .msg-bbl{max-width:88%}
 }
 .hidden{display:none!important}
+
+body[data-theme="dark"]{background:#0b1120;color:#e5edf8}
+body[data-theme="dark"] .main{background:#0b1120}
+body[data-theme="dark"] .topbar{background:#111827;border-bottom-color:#233044}
+body[data-theme="dark"] .sidebar{background:#07111f}
+body[data-theme="dark"] .logo{border-bottom-color:#1e293b}
+body[data-theme="dark"] .logo p,
+body[data-theme="dark"] .nav-group-label,
+body[data-theme="dark"] .stat-lbl,
+body[data-theme="dark"] .stat-sub,
+body[data-theme="dark"] .card-head p,
+body[data-theme="dark"] .empty,
+body[data-theme="dark"] .insight-kicker,
+body[data-theme="dark"] .hcircle-lbl{color:#94a3b8}
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .stat,
+body[data-theme="dark"] .auth-box,
+body[data-theme="dark"] .modal,
+body[data-theme="dark"] .insight-card{background:#111827;border-color:#243244;box-shadow:0 10px 34px rgba(0,0,0,.26)}
+body[data-theme="dark"] .tbl th,
+body[data-theme="dark"] .modal-hd,
+body[data-theme="dark"] .modal-ft,
+body[data-theme="dark"] .chat-input-area{border-color:#243244}
+body[data-theme="dark"] .tbl td,
+body[data-theme="dark"] .appt,
+body[data-theme="dark"] .li,
+body[data-theme="dark"] .kv,
+body[data-theme="dark"] .signal-item{border-color:#1f2937}
+body[data-theme="dark"] .tbl tr:hover td,
+body[data-theme="dark"] .tbl tr.active-row td{background:#172033}
+body[data-theme="dark"] .btn-secondary,
+body[data-theme="dark"] .theme-toggle,
+body[data-theme="dark"] .modal-close,
+body[data-theme="dark"] .auth-tab,
+body[data-theme="dark"] .sugg button{background:#172033;color:#dbe7f5;border-color:#334155}
+body[data-theme="dark"] .btn-secondary:hover,
+body[data-theme="dark"] .theme-toggle:hover,
+body[data-theme="dark"] .modal-close:hover,
+body[data-theme="dark"] .sugg button:hover{background:#1f2a44}
+body[data-theme="dark"] .fg input,
+body[data-theme="dark"] .fg select,
+body[data-theme="dark"] .fg textarea,
+body[data-theme="dark"] .chat-input,
+body[data-theme="dark"] .sidebar-switch{background:#0f172a;color:#e5edf8;border-color:#334155}
+body[data-theme="dark"] .fg input:focus,
+body[data-theme="dark"] .fg select:focus,
+body[data-theme="dark"] .fg textarea:focus,
+body[data-theme="dark"] .chat-input:focus{border-color:#60a5fa}
+body[data-theme="dark"] .msg.ai .msg-bbl,
+body[data-theme="dark"] .note,
+body[data-theme="dark"] .auth-hint{background:#172033;color:#dbe7f5;border-color:#334155}
+body[data-theme="dark"] .toast{background:#111827;color:#e5edf8;border-color:#334155}
+body[data-theme="dark"] .toast.error{background:#2a1216;color:#fecaca;border-color:#7f1d1d}
+body[data-theme="dark"] .toast.success{background:#102416;color:#bbf7d0;border-color:#166534}
+body[data-theme="dark"] .auth-panel{background:linear-gradient(160deg,#06111f,#12243c)}
+body[data-theme="dark"] .auth-tab.active{background:#2563eb;border-color:#2563eb}
+body[data-theme="dark"] .appt-date,
+body[data-theme="dark"] .b-blue{background:#172554;color:#93c5fd}
+body[data-theme="dark"] .b-green{background:#052e1a;color:#86efac}
+body[data-theme="dark"] .b-warn{background:#422006;color:#facc15}
+body[data-theme="dark"] .b-red{background:#450a0a;color:#fca5a5}
+body[data-theme="dark"] .b-gray{background:#1f2937;color:#cbd5e1}
+body[data-theme="dark"] .role-chip.admin{background:#172554;color:#93c5fd}
+body[data-theme="dark"] .role-chip.doctor{background:#2e1065;color:#c4b5fd}
+body[data-theme="dark"] .role-chip.user{background:#134e4a;color:#99f6e4}
+body[data-theme="dark"] .insight-copy,
+body[data-theme="dark"] .note,
+body[data-theme="dark"] .tbl td[style],
+body[data-theme="dark"] .kv span[style],
+body[data-theme="dark"] div[style*="color:#64748b"]{color:#a8b3c7!important}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#334155}

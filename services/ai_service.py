@@ -27,7 +27,7 @@ async def chat(db, actor, data: ChatRequest):
         SELECT name, date, status, results
         FROM analyses
         WHERE user_id=? AND status IN (?, ?)
-        ORDER BY COALESCE(ready_at, date, ordered_at, created_at) DESC
+        ORDER BY COALESCE(ready_at, date, ordered_at, CAST(created_at AS TEXT)) DESC
         LIMIT 10
         """,
         (user_id, ANALYSIS_STATUS_READY, ANALYSIS_STATUS_REVIEWED),

@@ -154,6 +154,23 @@ class CoreFlowsTests(unittest.TestCase):
         status = self.db.execute("SELECT status FROM appointments WHERE id=1").fetchone()["status"]
         self.assertEqual(status, "отменено")
 
+    def test_doctor_can_book_visit_for_assigned_patient(self):
+        result = appointments_service.create_appointment(
+            self.db,
+            self.doctor,
+            AppointmentCreate(
+                user_id=3,
+                doctor_user_id=2,
+                date="2099-01-01",
+                time="10:15",
+                reason="Doctor follow-up",
+            ),
+        )
+        self.assertEqual(result["status"], "created")
+        appointment = self.db.execute("SELECT * FROM appointments WHERE id=?", (result["id"],)).fetchone()
+        self.assertEqual(appointment["user_id"], 3)
+        self.assertEqual(appointment["doctor_user_id"], 2)
+
     def test_doctor_cannot_access_unassigned_patient_analyses(self):
         with self.assertRaises(HTTPException) as context:
             analyses_service.get_user_analyses(self.db, self.doctor, self.patient_two["id"])

@@ -130,6 +130,7 @@ function PatientDashboard({ analyses, appointments, referrals, onNavigate, onOpe
 
 // ── DOCTOR DASHBOARD ──
 function DoctorDashboard({ onNavigate, onDoctorRefreshReady }) {
+  const { user } = useAuth()
   const [patients, setPatients] = useState([])
   const [stats, setStats] = useState({})
   const [activePatient, setActivePatient] = useState(null)
@@ -182,6 +183,12 @@ function DoctorDashboard({ onNavigate, onDoctorRefreshReady }) {
   const [anName, setAnName] = useState(''), [anDate, setAnDate] = useState(''), [anNote, setAnNote] = useState('')
   const [showReview, setShowReview] = useState(false)
   const [reviewId, setReviewId] = useState(null), [reviewNote, setReviewNote] = useState('')
+  const [showBook, setShowBook] = useState(false)
+  const [bookDate, setBookDate] = useState(getDefaultBookingDate())
+  const [bookSlots, setBookSlots] = useState([])
+  const [bookSlot, setBookSlot] = useState('')
+  const [bookReason, setBookReason] = useState('')
+  const [bookLoading, setBookLoading] = useState(false)
 
   const assignAnalysis = async () => {
     if (!anName.trim()) return toast('Enter analysis name.')
@@ -198,6 +205,48 @@ function DoctorDashboard({ onNavigate, onDoctorRefreshReady }) {
       toast('Review saved.','success'); setShowReview(false)
       const an = await apiGet('/analyses/'+activePatient.id); setActiveAnalyses(mapAnalysesList(an))
     } catch(e) { toast(e.message) }
+  }
+
+  const loadDoctorSlots = async (dt = bookDate) => {
+    if (!user?.id || !dt) return
+    setBookLoading(true); setBookSlot(''); setBookSlots([])
+    try {
+      const data = await apiGet(`/doctors/${user.id}/availability`, { date: dt })
+      setBookSlots(data.available_slots || [])
+    } catch (e) {
+      toast(e.message || 'Failed to load available slots')
+    } finally {
+      setBookLoading(false)
+    }
+  }
+
+  const openBookVisit = () => {
+    const nextDate = getDefaultBookingDate()
+    setBookDate(nextDate)
+    setBookReason('')
+    setShowBook(true)
+    loadDoctorSlots(nextDate)
+  }
+
+  const submitBookVisit = async () => {
+    if (!activePatient) return toast('Select a patient first.')
+    if (!bookSlot) return toast('Select date and time.')
+    try {
+      await apiPost('/appointments', {
+        user_id: activePatient.id,
+        doctor_user_id: user.id,
+        date: bookDate,
+        time: bookSlot,
+        reason: bookReason,
+      })
+      toast('Visit booked.', 'success')
+      setShowBook(false)
+      const ap = await apiGet('/appointments/' + activePatient.id)
+      setActiveAppts(mapAppointmentsList(ap))
+      loadPatients(offset)
+    } catch (e) {
+      toast(e.message || 'Failed to book visit')
+    }
   }
 
   return (
@@ -221,7 +270,7 @@ function DoctorDashboard({ onNavigate, onDoctorRefreshReady }) {
                 <thead><tr><th>Name</th><th>Last analysis</th><th>Appointments</th><th>Ready</th></tr></thead>
                 <tbody>
                   {patients.length ? patients.slice(0,5).map(p=>(
-                    <tr key={p.id} onClick={()=>selectPatient(p)} style={{cursor:'pointer',background:activePatient?.id===p.id?'#eff6ff':''}}>
+                    <tr key={p.id} onClick={()=>selectPatient(p)} className={activePatient?.id===p.id?'active-row':''} style={{cursor:'pointer'}}>
                       <td style={{fontWeight:500}}>{p.name}</td>
                       <td style={{color:'#64748b'}}>{p.latest_analysis_date||'—'}</td>
                       <td style={{color:'#64748b'}}>{p.appointment_count||0}</td>
@@ -269,6 +318,7 @@ function DoctorDashboard({ onNavigate, onDoctorRefreshReady }) {
             <div className="card">
               <div className="card-head">
                 <div><h3>Appointments</h3><p>Visits scheduled for this patient</p></div>
+                <button className="btn btn-primary btn-sm" onClick={openBookVisit}>Book visit</button>
               </div>
               <div className="card-body" style={{padding:0}}>
                 <table className="tbl">
@@ -291,6 +341,7 @@ function DoctorDashboard({ onNavigate, onDoctorRefreshReady }) {
       </div>
       {showAssign&&<div className="modal-overlay"><div className="modal"><div className="modal-hd"><h3>Assign analysis</h3><button className="modal-close" onClick={()=>setShowAssign(false)}>✕</button></div><div className="modal-bd"><div className="fg"><label>Analysis name</label><input list="an-opts" value={anName} onChange={e=>setAnName(e.target.value)} placeholder="Choose or type"/><datalist id="an-opts">{ANALYSIS_NAME_OPTIONS.map(n=><option key={n} value={n}/>)}</datalist></div><div className="fg"><label>Scheduled date</label><input type="date" value={anDate} min={getLocalDateIso(0)} onChange={e=>setAnDate(e.target.value)}/></div><div className="fg"><label>Doctor note</label><textarea value={anNote} onChange={e=>setAnNote(e.target.value)} placeholder="Preparation instructions..."/></div></div><div className="modal-ft"><button className="btn btn-secondary" onClick={()=>setShowAssign(false)}>Cancel</button><button className="btn btn-primary" onClick={assignAnalysis}>Assign</button></div></div></div>}
       {showReview&&<div className="modal-overlay"><div className="modal"><div className="modal-hd"><h3>Doctor review</h3><button className="modal-close" onClick={()=>setShowReview(false)}>✕</button></div><div className="modal-bd"><div className="fg"><label>Doctor note</label><textarea value={reviewNote} onChange={e=>setReviewNote(e.target.value)} placeholder="Clinical interpretation..."/></div></div><div className="modal-ft"><button className="btn btn-secondary" onClick={()=>setShowReview(false)}>Cancel</button><button className="btn btn-primary" onClick={submitReview}>Save review</button></div></div></div>}
+      {showBook&&<div className="modal-overlay"><div className="modal"><div className="modal-hd"><h3>Book visit</h3><button className="modal-close" onClick={()=>setShowBook(false)}>✕</button></div><div className="modal-bd"><div className="fg"><label>Patient</label><input value={activePatient?.name||''} disabled /></div><div className="frow"><div className="fg"><label>Date</label><input type="date" value={bookDate} min={getLocalDateIso(0)} onChange={e=>{setBookDate(e.target.value);loadDoctorSlots(e.target.value)}}/></div><div className="fg"><label>Session time</label><select value={bookSlot} onChange={e=>setBookSlot(e.target.value)} disabled={bookLoading||!bookSlots.length}><option value="">{bookLoading?'Loading...':!bookSlots.length?'No free slots':'Select time slot'}</option>{bookSlots.map(s=><option key={s} value={s}>{s}</option>)}</select></div></div><div className="fg"><label>Reason</label><textarea value={bookReason} onChange={e=>setBookReason(e.target.value)} placeholder="Visit reason..."/></div></div><div className="modal-ft"><button className="btn btn-secondary" onClick={()=>setShowBook(false)}>Cancel</button><button className="btn btn-primary" onClick={submitBookVisit}>Book</button></div></div></div>}
     </div>
   )
 }

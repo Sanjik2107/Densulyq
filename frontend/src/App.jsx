@@ -17,6 +17,9 @@ export default function App() {
   const toast = useToast()
   const { user, isAuthenticated, isAdmin, isDoctor, isPatient, loading, logout, authState, updateStoredPage } = useAuth()
   const [page, setPage] = useState('dashboard')
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('densaulyq-theme') || 'light' } catch { return 'light' }
+  })
   const [patientData, setPatientData] = useState({ analyses: [], appointments: [], referrals: [], doctors: [] })
   const [dataLoading, setDataLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -25,6 +28,11 @@ export default function App() {
   useEffect(() => {
     if (authState.page) setPage(authState.page)
   }, [authState.page])
+
+  useEffect(() => {
+    document.body.dataset.theme = theme
+    try { localStorage.setItem('densaulyq-theme', theme) } catch {}
+  }, [theme])
 
   useEffect(() => {
     if (!isAuthenticated || !user) return
@@ -59,6 +67,13 @@ export default function App() {
     updateStoredPage(id)
   }
 
+  const openAppointmentModal = () => {
+    navigate('appointments')
+    setShowModal(true)
+  }
+
+  const toggleTheme = () => setTheme(current => current === 'dark' ? 'light' : 'dark')
+
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
       <p>Loading portal...</p>
@@ -79,7 +94,7 @@ export default function App() {
 
   const renderPage = () => {
     switch (page) {
-      case 'dashboard': return <Dashboard onNavigate={navigate} onOpenModal={() => setShowModal(true)} patientData={patientData} onDoctorRefreshReady={setDoctorRefresh} />
+      case 'dashboard': return <Dashboard onNavigate={navigate} onOpenModal={openAppointmentModal} patientData={patientData} onDoctorRefreshReady={setDoctorRefresh} />
       case 'analyses': return <Analyses analyses={patientData.analyses} />
       case 'appointments': return <Appointments appointments={patientData.appointments} doctors={patientData.doctors} onRefresh={loadPatientData} showModal={showModal} onCloseModal={() => setShowModal(false)} onOpenModal={() => setShowModal(true)} />
       case 'referrals': return <Referrals referrals={patientData.referrals} />
@@ -87,7 +102,7 @@ export default function App() {
       case 'profile': return <Profile />
       case 'patients': return <Dashboard onNavigate={navigate} patientData={patientData} onDoctorRefreshReady={setDoctorRefresh} />
       case 'admin': return <AdminPanel />
-      default: return <Dashboard onNavigate={navigate} onOpenModal={() => setShowModal(true)} patientData={patientData} onDoctorRefreshReady={setDoctorRefresh} />
+      default: return <Dashboard onNavigate={navigate} onOpenModal={openAppointmentModal} patientData={patientData} onDoctorRefreshReady={setDoctorRefresh} />
     }
   }
 
@@ -97,7 +112,10 @@ export default function App() {
       <main className="main">
         <header className="topbar">
           <h1>{title}</h1>
-          <div>{getTopbarActions()}</div>
+          <div className="topbar-actions">
+            <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">{theme === 'dark' ? 'Light' : 'Dark'}</button>
+            {getTopbarActions()}
+          </div>
         </header>
         <div className="content">
           {renderPage()}

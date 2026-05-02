@@ -9,6 +9,7 @@ from app_helpers import (
     normalize_calendar_date,
     normalize_slot_time,
     patient_has_slot_conflict,
+    require_permission,
     require_user_scope,
 )
 from db import get_last_insert_id
@@ -26,11 +27,19 @@ def get_user_appointments(db, actor, user_id: int):
 
 def create_appointment(db, actor, data: AppointmentCreate):
     user_id = data.user_id or actor["id"]
-    _, target_user = require_user_scope(db, actor, user_id, cross_user_permission="users:update")
+    doctor_user_id = data.doctor_user_id
+    if actor["role"] == "doctor" and user_id != actor["id"]:
+        require_permission(db, actor, "users:read")
+        _, target_user = require_user_scope(db, actor, user_id, cross_user_permission="users:read")
+        doctor_user_id = doctor_user_id or actor["id"]
+        if doctor_user_id != actor["id"]:
+            raise HTTPException(status_code=403, detail="Доктор может записывать пациента только к себе")
+    else:
+        _, target_user = require_user_scope(db, actor, user_id, cross_user_permission="users:update")
     if target_user["role"] != "user":
         raise HTTPException(status_code=400, detail="Запись к доктору доступна только пациенту")
     ensure_active(target_user)
-    if not data.doctor_user_id:
+    if not doctor_user_id:
         raise HTTPException(status_code=400, detail="Выберите доктора")
     date_iso = normalize_calendar_date(data.date)
     time_hhmm = normalize_slot_time(data.time)
@@ -39,7 +48,7 @@ def create_appointment(db, actor, data: AppointmentCreate):
         raise HTTPException(status_code=400, detail="Нельзя записаться на прошедшее время")
     doctor = db.execute(
         "SELECT * FROM users WHERE id=? AND role='doctor'",
-        (data.doctor_user_id,),
+        (doctor_user_id,),
     ).fetchone()
     if not doctor:
         raise HTTPException(status_code=400, detail="Доктор не найден")
