@@ -5,8 +5,22 @@ import os
 APP_VERSION = "1.2.0"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 DB_PATH = "medportal.db"
+DATABASE_URL = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("POSTGRES_PRISMA_URL")
+    or os.getenv("POSTGRES_URL_NON_POOLING")
+    or ""
+).strip()
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "*").split(",")
+    if origin.strip()
+]
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIST_PATH = os.path.join(BASE_DIR, "frontend", "dist", "index.html")
+FRONTEND_DIST_DIR = os.path.dirname(FRONTEND_DIST_PATH)
+FRONTEND_ASSETS_DIR = os.path.join(FRONTEND_DIST_DIR, "assets")
 FRONTEND_DEV_PATH = os.path.join(BASE_DIR, "frontend", "index.html")
 if os.path.exists(FRONTEND_DIST_PATH):
     FRONTEND_PATH = FRONTEND_DIST_PATH

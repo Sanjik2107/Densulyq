@@ -1,4 +1,4 @@
-export const API_BASE = 'http://localhost:8000'
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin
 export const AUTH_STORAGE_KEY = 'densaulyq-auth-v2'
 
 export const I18N_MAP = {

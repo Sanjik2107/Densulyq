@@ -7,20 +7,124 @@ from config import (
     ANALYSIS_STATUS_ORDERED,
     ANALYSIS_STATUS_READY,
     ANALYSIS_STATUS_REVIEWED,
+    DATABASE_URL,
     DB_PATH,
     DEMO_CREDENTIALS,
     ROLE_PERMISSIONS,
 )
 from security import hash_password
 
+try:
+    import psycopg
+    from psycopg import errors as psycopg_errors
+except ImportError:  # pragma: no cover - only used when PostgreSQL is configured.
+    psycopg = None
+    psycopg_errors = None
+
+
+class DatabaseIntegrityError(Exception):
+    pass
+
+
+class DbRow(dict):
+    def __init__(self, columns, values):
+        super().__init__(zip(columns, values))
+        self._values = tuple(values)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return super().__getitem__(key)
+
+
+class PgCursor:
+    def __init__(self, cursor):
+        self.cursor = cursor
+        self._columns = [column.name for column in cursor.description] if cursor.description else []
+
+    def fetchone(self):
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        return DbRow(self._columns, row)
+
+    def fetchall(self):
+        return [DbRow(self._columns, row) for row in self.cursor.fetchall()]
+
+
+class PgConnection:
+    def __init__(self, conn):
+        self.conn = conn
+
+    def cursor(self):
+        return self
+
+    def execute(self, sql, params=()):
+        sql = _translate_sqlite_sql_to_postgres(sql)
+        try:
+            cursor = self.conn.execute(sql, params)
+            return PgCursor(cursor)
+        except psycopg_errors.IntegrityError as error:
+            self.conn.rollback()
+            raise DatabaseIntegrityError(str(error)) from error
+
+    def executemany(self, sql, params_seq):
+        sql = _translate_sqlite_sql_to_postgres(sql)
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.executemany(sql, params_seq)
+        except psycopg_errors.IntegrityError as error:
+            self.conn.rollback()
+            raise DatabaseIntegrityError(str(error)) from error
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
+
+
+def _translate_sqlite_sql_to_postgres(sql: str):
+    translated = (
+        sql.replace("?", "%s")
+        .replace("COLLATE NOCASE", "")
+        .replace("SELECT last_insert_rowid()", "SELECT LASTVAL()")
+    )
+    if "INSERT OR IGNORE INTO role_permissions" in translated:
+        translated = translated.replace("INSERT OR IGNORE INTO role_permissions", "INSERT INTO role_permissions")
+        translated = translated.replace(
+            "VALUES (%s, %s, %s)",
+            "VALUES (%s, %s, %s) ON CONFLICT (role, permission) DO NOTHING",
+        )
+    return translated
+
 
 def get_db():
+    if DATABASE_URL:
+        if psycopg is None:
+            raise RuntimeError("PostgreSQL is configured, but psycopg is not installed")
+        conn = psycopg.connect(DATABASE_URL)
+        return PgConnection(conn)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys=ON")
     return conn
 
 
-def ensure_column(conn: sqlite3.Connection, table_name: str, column_name: str, column_sql: str):
+def is_postgres_connection(conn):
+    return isinstance(conn, PgConnection)
+
+
+def get_last_insert_id(conn):
+    return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+
+def ensure_column(conn, table_name: str, column_name: str, column_sql: str):
+    if is_postgres_connection(conn):
+        column = column_sql.split()[0]
+        column_type = " ".join(column_sql.split()[1:])
+        conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {column} {column_type}")
+        return
     columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
     if column_name not in columns:
         conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}")
@@ -49,7 +153,7 @@ def try_normalize_slot_time(raw_value: Optional[str]):
     return slot.strftime("%H:%M")
 
 
-def seed_role_permissions(cursor: sqlite3.Cursor):
+def seed_role_permissions(cursor):
     for role, permissions in ROLE_PERMISSIONS.items():
         for permission, description in permissions:
             cursor.execute(
@@ -61,7 +165,7 @@ def seed_role_permissions(cursor: sqlite3.Cursor):
             )
 
 
-def seed_demo_password(cursor: sqlite3.Cursor, username: str):
+def seed_demo_password(cursor, username: str):
     password = DEMO_CREDENTIALS[username]
     cursor.execute(
         "UPDATE users SET password_hash=? WHERE username=?",
@@ -69,9 +173,357 @@ def seed_demo_password(cursor: sqlite3.Cursor, username: str):
     )
 
 
+def init_postgres_db(conn):
+    c = conn.cursor()
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            username TEXT,
+            password_hash TEXT,
+            iin TEXT UNIQUE,
+            dob TEXT,
+            blood_type TEXT,
+            phone TEXT,
+            email TEXT,
+            address TEXT,
+            height REAL,
+            weight REAL,
+            role TEXT DEFAULT 'user',
+            is_active INTEGER DEFAULT 1,
+            department TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_unique
+        ON users(username) WHERE username IS NOT NULL
+        """
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
+
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS analyses (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            doctor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            name TEXT NOT NULL,
+            date TEXT,
+            doctor TEXT,
+            status TEXT DEFAULT 'в обработке',
+            results TEXT,
+            ordered_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            scheduled_for TEXT,
+            ready_at TEXT,
+            reviewed_at TEXT,
+            doctor_note TEXT,
+            lab_note TEXT,
+            is_visible_to_patient INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS idx_analyses_user_id ON analyses(user_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_analyses_doctor_user_id ON analyses(doctor_user_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_analyses_status ON analyses(status)")
+
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS appointments (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            doctor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            doctor TEXT,
+            speciality TEXT,
+            date TEXT,
+            time TEXT,
+            place TEXT,
+            reason TEXT,
+            status TEXT DEFAULT 'ожидание',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS idx_appointments_user_id ON appointments(user_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_appointments_doctor_user_id ON appointments(doctor_user_id)")
+    c.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_appointments_doctor_slot_active
+        ON appointments(doctor_user_id, date, time)
+        WHERE COALESCE(status, '') != 'отменено'
+        """
+    )
+    c.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_appointments_doctor_slot_active
+        ON appointments(doctor_user_id, date, time)
+        WHERE COALESCE(status, '') != 'отменено'
+        """
+    )
+
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS referrals (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            name TEXT,
+            from_doctor TEXT,
+            issue_date TEXT,
+            deadline TEXT,
+            status TEXT DEFAULT 'активно'
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chat_history (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            role TEXT,
+            message TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS role_permissions (
+            role TEXT NOT NULL,
+            permission TEXT NOT NULL,
+            description TEXT,
+            PRIMARY KEY (role, permission)
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS auth_sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    seed_role_permissions(c)
+    c.execute("UPDATE users SET role='user' WHERE role IS NULL OR TRIM(role)=''")
+    c.execute("UPDATE users SET is_active=1 WHERE is_active IS NULL")
+
+    demo_user = c.execute("SELECT * FROM users WHERE id=1").fetchone()
+    if not demo_user:
+        c.execute(
+            """
+            INSERT INTO users (
+                id, name, username, password_hash, iin, dob, blood_type, phone,
+                email, address, height, weight, role, is_active, department
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                1,
+                "Алибек Джаксыбеков",
+                "patient-demo",
+                hash_password(DEMO_CREDENTIALS["patient-demo"]),
+                "900315300123",
+                "15.03.1990",
+                "II+",
+                "+7 700 123 45 67",
+                "alibek@email.com",
+                "г. Алматы, ул. Абая 14, кв. 22",
+                178,
+                82,
+                "user",
+                1,
+                "Пациент",
+            ),
+        )
+    else:
+        c.execute(
+            """
+            UPDATE users
+            SET username='patient-demo', role='user', is_active=1, department=COALESCE(department, 'Пациент')
+            WHERE id=1
+            """
+        )
+        seed_demo_password(c, "patient-demo")
+
+    c.execute("SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 1))")
+
+    demo_accounts = [
+        (
+            "admin-demo",
+            "Администратор Densaulyq",
+            "880101400001",
+            "01.01.1988",
+            "I+",
+            "+7 700 000 00 01",
+            "admin@densaulyq.local",
+            "г. Алматы, центр администрирования",
+            175,
+            74,
+            "admin",
+            "Администрация",
+        ),
+        (
+            "doctor-demo",
+            "Иванова Н.С.",
+            "870212400002",
+            "12.02.1987",
+            "I+",
+            "+7 700 000 00 02",
+            "doctor@densaulyq.local",
+            "г. Алматы, клиника Densaulyq",
+            168,
+            62,
+            "doctor",
+            "Терапия",
+        ),
+    ]
+    for username, name, iin, dob, blood_type, phone, email, address, height, weight, role, department in demo_accounts:
+        user = c.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+        if not user:
+            c.execute(
+                """
+                INSERT INTO users (
+                    name, username, password_hash, iin, dob, blood_type, phone,
+                    email, address, height, weight, role, is_active, department
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                """,
+                (
+                    name,
+                    username,
+                    hash_password(DEMO_CREDENTIALS[username]),
+                    iin,
+                    dob,
+                    blood_type,
+                    phone,
+                    email,
+                    address,
+                    height,
+                    weight,
+                    role,
+                    department,
+                ),
+            )
+        else:
+            c.execute(
+                """
+                UPDATE users
+                SET role=?, is_active=1, department=COALESCE(department, ?)
+                WHERE username=?
+                """,
+                (role, department, username),
+            )
+            seed_demo_password(c, username)
+
+    doctor_demo = c.execute("SELECT id, name, department FROM users WHERE username='doctor-demo'").fetchone()
+
+    analyses_exists = c.execute("SELECT 1 FROM analyses WHERE user_id=1 LIMIT 1").fetchone()
+    if not analyses_exists and doctor_demo:
+        c.executemany(
+            """
+            INSERT INTO analyses (
+                user_id, doctor_user_id, name, date, doctor, status, results,
+                ordered_at, scheduled_for, ready_at, reviewed_at, doctor_note, lab_note, is_visible_to_patient
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    1,
+                    doctor_demo["id"],
+                    "Общий анализ крови",
+                    "2025-03-12",
+                    doctor_demo["name"],
+                    ANALYSIS_STATUS_READY,
+                    json.dumps(
+                        [
+                            {"param": "Гемоглобин", "val": 145, "unit": "г/л", "norm": "120-160", "ok": True},
+                            {"param": "Лейкоциты", "val": 9.1, "unit": "x10^9/л", "norm": "4.0-9.0", "ok": False},
+                        ],
+                        ensure_ascii=False,
+                    ),
+                    "2025-03-10",
+                    "2025-03-12",
+                    "2025-03-12",
+                    None,
+                    "Соблюдайте обычный питьевой режим перед контрольным анализом.",
+                    "Незначительное повышение лейкоцитов, нужен контроль в динамике.",
+                    1,
+                ),
+                (
+                    1,
+                    doctor_demo["id"],
+                    "Биохимия крови",
+                    "2025-03-12",
+                    doctor_demo["name"],
+                    ANALYSIS_STATUS_REVIEWED,
+                    json.dumps(
+                        [
+                            {"param": "Глюкоза", "val": 5.2, "unit": "ммоль/л", "norm": "3.9-6.1", "ok": True},
+                            {"param": "Холестерин общий", "val": 5.8, "unit": "ммоль/л", "norm": "< 5.2", "ok": False},
+                        ],
+                        ensure_ascii=False,
+                    ),
+                    "2025-03-10",
+                    "2025-03-12",
+                    "2025-03-12",
+                    "2025-03-13",
+                    "Повторить липидный профиль через 6-8 недель и обсудить рацион.",
+                    "Показатели готовы и проверены лабораторией.",
+                    1,
+                ),
+            ],
+        )
+
+    appointments_exist = c.execute("SELECT 1 FROM appointments WHERE user_id=1 LIMIT 1").fetchone()
+    if not appointments_exist and doctor_demo:
+        c.executemany(
+            """
+            INSERT INTO appointments (user_id, doctor_user_id, doctor, speciality, date, time, place, reason, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (1, doctor_demo["id"], doctor_demo["name"], doctor_demo["department"], "2025-04-25", "14:00", "Кабинет 105", "Контроль давления", "подтверждено"),
+            ],
+        )
+
+    referrals_exist = c.execute("SELECT 1 FROM referrals WHERE user_id=1 LIMIT 1").fetchone()
+    if not referrals_exist:
+        c.executemany(
+            """
+            INSERT INTO referrals (user_id, name, from_doctor, issue_date, deadline, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (1, "Общий анализ крови", "Иванова Н.С.", "2025-04-10", "2025-04-30", "активно"),
+                (1, "УЗИ брюшной полости", "Карпова В.М.", "2025-04-05", "2025-05-05", "активно"),
+            ],
+        )
+
+    c.execute("DELETE FROM auth_sessions WHERE user_id NOT IN (SELECT id FROM users)")
+    c.execute("SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 1))")
+    c.execute("SELECT setval(pg_get_serial_sequence('analyses', 'id'), COALESCE((SELECT MAX(id) FROM analyses), 1))")
+    c.execute("SELECT setval(pg_get_serial_sequence('appointments', 'id'), COALESCE((SELECT MAX(id) FROM appointments), 1))")
+    c.execute("SELECT setval(pg_get_serial_sequence('referrals', 'id'), COALESCE((SELECT MAX(id) FROM referrals), 1))")
+    c.execute("SELECT setval(pg_get_serial_sequence('chat_history', 'id'), COALESCE((SELECT MAX(id) FROM chat_history), 1))")
+    conn.commit()
+    conn.close()
+
+
 def init_db():
     conn = get_db()
     c = conn.cursor()
+
+    if is_postgres_connection(conn):
+        init_postgres_db(conn)
+        return
 
     c.execute(
         """

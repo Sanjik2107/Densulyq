@@ -11,6 +11,7 @@ from app_helpers import (
     patient_has_slot_conflict,
     require_user_scope,
 )
+from db import get_last_insert_id
 from schemas import AppointmentCreate
 
 
@@ -64,7 +65,7 @@ def create_appointment(db, actor, data: AppointmentCreate):
         ),
     )
     db.commit()
-    new_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    new_id = get_last_insert_id(db)
     return {"id": new_id, "status": "created"}
 
 

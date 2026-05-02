@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Lock
 
 from fastapi import HTTPException
@@ -14,6 +14,7 @@ from app_helpers import (
     validate_password,
     validate_username,
 )
+from db import get_last_insert_id
 from schemas import AuthLogin, AuthRegister
 from security import hash_password, verify_password
 
@@ -28,7 +29,7 @@ def _rate_limit_key(username: str, client_ip: str):
 
 
 def _enforce_login_rate_limit(username: str, client_ip: str):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     key = _rate_limit_key(username, client_ip)
     with _LOGIN_LOCK:
         entry = _LOGIN_ATTEMPTS.get(key)
@@ -48,7 +49,7 @@ def _enforce_login_rate_limit(username: str, client_ip: str):
 
 
 def _register_failed_login(username: str, client_ip: str):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     key = _rate_limit_key(username, client_ip)
     with _LOGIN_LOCK:
         entry = _LOGIN_ATTEMPTS.get(key)
@@ -108,7 +109,7 @@ def register(db, data: AuthRegister):
         """,
         (name, username, hash_password(password), phone, email),
     )
-    user_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    user_id = get_last_insert_id(db)
     user = get_user_or_404(db, user_id)
     token = issue_session_token(db, user_id)
     db.commit()

@@ -17,6 +17,7 @@ from app_helpers import (
     validate_name,
 )
 from config import ANALYSIS_READY_STATUSES, ANALYSIS_STATUS_ORDERED, ANALYSIS_STATUS_READY, ANALYSIS_STATUS_REVIEWED
+from db import get_last_insert_id
 from schemas import AnalysisLabUpdate, AnalysisOrderCreate, AnalysisReviewUpdate
 
 ALLOWED_ANALYSIS_TRANSITIONS = {
@@ -83,7 +84,7 @@ def doctor_create_analysis(db, actor, user_id: int, data: AnalysisOrderCreate):
         ),
     )
     db.commit()
-    created = get_analysis_or_404(db, db.execute("SELECT last_insert_rowid()").fetchone()[0])
+    created = get_analysis_or_404(db, get_last_insert_id(db))
     return {"status": "created", "analysis": serialize_analysis_row(created)}
 
 

@@ -12,6 +12,7 @@ from app_helpers import (
     validate_role,
     validate_username,
 )
+from db import get_last_insert_id
 from schemas import AdminUserCreate, AdminUserUpdate, model_dump
 from security import hash_password
 
@@ -83,7 +84,7 @@ def create_user(db, actor, data: AdminUserCreate):
         ),
     )
     db.commit()
-    user_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    user_id = get_last_insert_id(db)
     created = get_user_or_404(db, user_id)
     return {"status": "created", "user": serialize_user(created)}
 
@@ -98,8 +99,7 @@ def update_user(db, actor, user_id: int, data: AdminUserUpdate):
         fields["is_active"] = 1 if fields["is_active"] else 0
     if "password" in fields:
         password = fields.pop("password")
-        if not password.strip():
-            raise HTTPException(status_code=400, detail="Пароль не может быть пустым")
+        password = validate_password(password.strip())
         fields["password_hash"] = hash_password(password)
     for key in ("department", "email", "phone", "address"):
         if key in fields:

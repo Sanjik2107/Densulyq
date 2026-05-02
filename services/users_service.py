@@ -22,6 +22,7 @@ from config import (
     BOOKING_DAY_START_HOUR,
     BOOKING_SLOT_MINUTES,
 )
+from db import DatabaseIntegrityError
 from schemas import ProfileUpdate, model_dump
 
 
@@ -123,7 +124,7 @@ def update_user_profile(db, actor, user_id: int, data: ProfileUpdate):
         db.execute(f"UPDATE users SET {set_clause} WHERE id=?", (*fields.values(), target["id"]))
         db.commit()
         return {"status": "updated"}
-    except sqlite3.IntegrityError as error:
+    except (sqlite3.IntegrityError, DatabaseIntegrityError) as error:
         if "iin" in str(error).lower() or "unique" in str(error).lower():
             raise HTTPException(status_code=400, detail="Такой ИИН уже используется")
         raise

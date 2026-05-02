@@ -14,7 +14,7 @@ Lightweight medical portal prototype for patient care workflows and role-based c
 
 ## Technology Stack
 
-- Backend: Python 3.10+, FastAPI, Uvicorn, SQLite, Pydantic, HTTPX
+- Backend: Python 3.10+, FastAPI, Uvicorn, PostgreSQL/SQLite, Pydantic, HTTPX
 - Frontend: React + Vite
 
 ## Project Structure
@@ -45,12 +45,37 @@ Densulyq/
    npm install
    cd ..
    ```
-4. Set your Gemini API key (optional):
+4. Configure environment variables:
    ```bash
+   # Production/Vercel PostgreSQL. Use the URL from your Postgres provider.
+   export DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
+
+   # Optional AI integration.
    export GEMINI_API_KEY="your_api_key_here"
    ```
 
+If `DATABASE_URL` is not set, the backend uses local SQLite at `medportal.db`.
+For Vercel Postgres/Neon/Supabase, set `DATABASE_URL` or `POSTGRES_URL` in the Vercel project environment.
+
 ## Run (Recommended)
+
+### Docker, one command
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- App: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+
+Docker Compose starts:
+
+- `app`: FastAPI backend with the built React frontend
+- `postgres`: PostgreSQL 16 with a persistent `postgres_data` volume
+
+### Local Python/Node
 
 1. Build frontend:
    ```bash
@@ -72,7 +97,12 @@ Densulyq/
 - `doctor-demo / doctor123`
 - `admin-demo / admin123`
 
-## Notes
+## Database
 
-- Local DB file is `medportal.db`.
+- Production data should live in PostgreSQL via `DATABASE_URL`/`POSTGRES_URL`.
+- Tables and indexes are created idempotently on startup with `CREATE TABLE IF NOT EXISTS`.
+- Demo accounts are seeded only when missing; existing application data is not wiped on deploy.
+- Local fallback DB file is `medportal.db` and is ignored by git.
 - This is an educational prototype and should be hardened before production use.
+
+Full architecture and module documentation: [`PROJECT.md`](PROJECT.md).
