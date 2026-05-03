@@ -9,6 +9,14 @@ __pycache__/
 venv/
 env/
 
+# Local environment files
+.env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
 # Local database and runtime files
 medportal.db
 *.sqlite

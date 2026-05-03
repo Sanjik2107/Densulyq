@@ -1,9 +1,13 @@
 import os
 from datetime import timedelta
 
+from dotenv import load_dotenv
+
 
 APP_VERSION = "1.2.0"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 DB_PATH = os.getenv("DB_PATH", "").strip() or os.path.join(BASE_DIR, "medportal.db")
 DATABASE_URL = (

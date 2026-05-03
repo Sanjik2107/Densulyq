@@ -97,7 +97,8 @@ Densulyq/
 
 1. Backend: `python3 -m pip install -r requirements.txt`
 2. Frontend: `cd frontend && npm install`
-3. Env: set `DATABASE_URL` for Postgres, or omit to use local `medportal.db` (gitignored).
+3. Env: `cp .env.example .env`. Leave `DATABASE_URL` empty to use local SQLite at `medportal.db`, or set it for Postgres. Add `GEMINI_API_KEY` only locally or in hosting secrets.
+4. Optional Vite dev env: `cp frontend/.env.example frontend/.env.local` and set `VITE_API_BASE_URL=http://127.0.0.1:8000` when running frontend/backend separately.
 
 ### Run
 
@@ -116,4 +117,3 @@ cd frontend && npm run lint && npm run build && npm run e2e
 ```
 
 More architecture detail: [`PROJECT.md`](PROJECT.md).
-
