@@ -51,15 +51,15 @@ Densulyq/
    ```
 4. Configure environment variables:
    ```bash
-   # Production/Vercel PostgreSQL. Use the URL from your Postgres provider.
+   # Cloud or local PostgreSQL (e.g. Render, Neon, Supabase).
    export DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
 
    # Optional AI integration.
    export GEMINI_API_KEY="your_api_key_here"
    ```
 
-If `DATABASE_URL` is not set, the backend uses local SQLite at `medportal.db`.
-For Vercel Postgres/Neon/Supabase, set `DATABASE_URL` or `POSTGRES_URL` in the Vercel project environment.
+If `DATABASE_URL` is not set, the backend uses local SQLite at `medportal.db` (file is gitignored).
+On hosts like Render, set `DATABASE_URL` (or `POSTGRES_URL`, etc.) in the service environment.
 
 ## Run (Recommended)
 
@@ -126,7 +126,8 @@ Full architecture and module documentation: [`PROJECT.md`](PROJECT.md).
 
 ## Students
 
-**Student IDs** (course submission — replace with your team’s actual IDs):
+**Student IDs** 
 
-- Student ID: _TBD_
-- Student ID: _TBD_
+1) Student ID: 230103195
+2) Student ID: 220103075
+3) Student ID: 230103147
