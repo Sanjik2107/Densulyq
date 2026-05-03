@@ -121,3 +121,12 @@ docker compose up -d --build
 ```
 
 Full architecture and module documentation: [`PROJECT.md`](PROJECT.md).
+
+---
+
+## Students
+
+**Student IDs** (course submission — replace with your team’s actual IDs):
+
+- Student ID: _TBD_
+- Student ID: _TBD_
