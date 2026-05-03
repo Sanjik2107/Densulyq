@@ -1,10 +1,13 @@
 from datetime import datetime
+import csv
+import io
 import json
 
 from fastapi import HTTPException
 
 from app_helpers import (
     get_analysis_or_404,
+    log_audit,
     normalize_analysis_status,
     normalize_calendar_date,
     normalize_optional_string,
@@ -85,6 +88,8 @@ def doctor_create_analysis(db, actor, user_id: int, data: AnalysisOrderCreate):
     )
     db.commit()
     created = get_analysis_or_404(db, get_last_insert_id(db))
+    log_audit(db, actor, "analysis.created", entity_type="analysis", entity_id=created["id"], metadata={"patient_id": patient["id"]})
+    db.commit()
     return {"status": "created", "analysis": serialize_analysis_row(created)}
 
 
@@ -116,22 +121,35 @@ def doctor_review(db, actor, analysis_id: int, data: AnalysisReviewUpdate):
     )
     db.commit()
     updated = get_analysis_or_404(db, analysis_id)
+    log_audit(db, actor, "analysis.reviewed", entity_type="analysis", entity_id=analysis_id)
+    db.commit()
     return {"status": "reviewed", "analysis": serialize_analysis_row(updated)}
 
 
-def list_admin_analyses(db, actor, *, limit: int = 50, offset: int = 0):
-    if actor["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Очередь анализов доступна только администратору")
+def list_lab_analyses(db, actor, *, limit: int = 50, offset: int = 0, query: str = "", status: str = ""):
+    if actor["role"] != "lab":
+        raise HTTPException(status_code=403, detail="Очередь анализов доступна только лаборатории")
     require_permission(db, actor, "analyses:manage")
     limit, offset = parse_pagination(limit, offset)
+    filters = []
+    params = []
+    if query:
+        like = f"%{query.strip()}%"
+        filters.append("(analyses.name LIKE ? OR users.name LIKE ? OR users.username LIKE ?)")
+        params.extend([like, like, like])
+    if status:
+        filters.append("analyses.status=?")
+        params.append(status.strip())
+    where_clause = "WHERE " + " AND ".join(filters) if filters else ""
     rows = db.execute(
-        """
+        f"""
         SELECT
             analyses.*,
             users.name AS patient_name,
             users.username AS patient_username
         FROM analyses
         JOIN users ON users.id = analyses.user_id
+        {where_clause}
         ORDER BY
             CASE analyses.status
                 WHEN 'назначен' THEN 0
@@ -144,7 +162,7 @@ def list_admin_analyses(db, actor, *, limit: int = 50, offset: int = 0):
         LIMIT ? OFFSET ?
         """
         ,
-        (limit, offset),
+        (*params, limit, offset),
     ).fetchall()
     analyses = []
     for row in rows:
@@ -155,9 +173,9 @@ def list_admin_analyses(db, actor, *, limit: int = 50, offset: int = 0):
     return {"analyses": analyses, "limit": limit, "offset": offset}
 
 
-def update_admin_analysis(db, actor, analysis_id: int, data: AnalysisLabUpdate):
-    if actor["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Обновлять анализы может только администратор")
+def update_lab_analysis(db, actor, analysis_id: int, data: AnalysisLabUpdate):
+    if actor["role"] != "lab":
+        raise HTTPException(status_code=403, detail="Обновлять анализы может только лаборатория")
     require_permission(db, actor, "analyses:manage")
     analysis = get_analysis_or_404(db, analysis_id)
     status = normalize_analysis_status(data.status)
@@ -180,11 +198,47 @@ def update_admin_analysis(db, actor, analysis_id: int, data: AnalysisLabUpdate):
         ready_at = normalize_calendar_date(data.ready_at) if data.ready_at else datetime.now().date().isoformat()
         updates["ready_at"] = ready_at
         updates["date"] = ready_at
-        updates["is_visible_to_patient"] = 1
     else:
         updates["ready_at"] = None
     set_clause = ", ".join(f"{column}=?" for column in updates)
     db.execute(f"UPDATE analyses SET {set_clause} WHERE id=?", (*updates.values(), analysis_id))
     db.commit()
     updated = get_analysis_or_404(db, analysis_id)
+    log_audit(
+        db,
+        actor,
+        "analysis.lab_updated",
+        entity_type="analysis",
+        entity_id=analysis_id,
+        metadata={"from": current_status, "to": status},
+    )
+    db.commit()
     return {"status": "updated", "analysis": serialize_analysis_row(updated)}
+
+
+def export_lab_analyses_csv(db, actor):
+    if actor["role"] != "lab":
+        raise HTTPException(status_code=403, detail="Экспорт анализов доступен только лаборатории")
+    require_permission(db, actor, "analyses:manage")
+    rows = db.execute(
+        """
+        SELECT analyses.id, users.name AS patient_name, users.username AS patient_username,
+               analyses.name, analyses.status, analyses.date, analyses.scheduled_for,
+               analyses.ready_at, analyses.doctor, analyses.lab_note
+        FROM analyses
+        JOIN users ON users.id = analyses.user_id
+        ORDER BY analyses.id
+        """
+    ).fetchall()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "patient_name", "patient_username", "analysis", "status", "date", "scheduled_for", "ready_at", "doctor", "lab_note"])
+    for row in rows:
+        writer.writerow([row[key] for key in row.keys()])
+    log_audit(db, actor, "analysis.exported", entity_type="analysis")
+    db.commit()
+    return output.getvalue()
+
+
+list_admin_analyses = list_lab_analyses
+update_admin_analysis = update_lab_analysis

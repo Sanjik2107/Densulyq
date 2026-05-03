@@ -10,6 +10,7 @@ from config import (
     DATABASE_URL,
     DB_PATH,
     DEMO_CREDENTIALS,
+    PASSWORD_SCHEME,
     ROLE_PERMISSIONS,
 )
 from security import hash_password
@@ -173,6 +174,27 @@ def seed_demo_password(cursor, username: str):
     )
 
 
+def has_supported_password_hash(encoded: Optional[str]):
+    if not encoded:
+        return False
+    try:
+        scheme, iterations_raw, salt, digest = encoded.split("$", 3)
+        return scheme == PASSWORD_SCHEME and int(iterations_raw) > 0 and bool(salt) and bool(digest)
+    except Exception:
+        return False
+
+
+def seed_demo_password_if_needed(cursor, user_row, username: str):
+    password_hash = None
+    if user_row:
+        try:
+            password_hash = user_row["password_hash"]
+        except (KeyError, IndexError):
+            password_hash = None
+    if not has_supported_password_hash(password_hash):
+        seed_demo_password(cursor, username)
+
+
 def init_postgres_db(conn):
     c = conn.cursor()
     c.execute(
@@ -193,10 +215,16 @@ def init_postgres_db(conn):
             role TEXT DEFAULT 'user',
             is_active INTEGER DEFAULT 1,
             department TEXT,
+            email_verified INTEGER DEFAULT 0,
+            phone_verified INTEGER DEFAULT 0,
+            two_factor_enabled INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
+    ensure_column(conn, "users", "email_verified", "email_verified INTEGER DEFAULT 0")
+    ensure_column(conn, "users", "phone_verified", "phone_verified INTEGER DEFAULT 0")
+    ensure_column(conn, "users", "two_factor_enabled", "two_factor_enabled INTEGER DEFAULT 0")
     c.execute(
         """
         CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_unique
@@ -297,11 +325,62 @@ def init_postgres_db(conn):
         CREATE TABLE IF NOT EXISTS auth_sessions (
             token TEXT PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            csrf_token TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
+    ensure_column(conn, "auth_sessions", "csrf_token", "csrf_token TEXT")
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            expires_at TIMESTAMP NOT NULL,
+            used_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS verification_codes (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            channel TEXT NOT NULL,
+            code TEXT NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            used_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS two_factor_challenges (
+            challenge_token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            code TEXT NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id SERIAL PRIMARY KEY,
+            actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            action TEXT NOT NULL,
+            entity_type TEXT,
+            entity_id INTEGER,
+            metadata TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at)")
 
     seed_role_permissions(c)
     c.execute("UPDATE users SET role='user' WHERE role IS NULL OR TRIM(role)=''")
@@ -343,7 +422,7 @@ def init_postgres_db(conn):
             WHERE id=1
             """
         )
-        seed_demo_password(c, "patient-demo")
+        seed_demo_password_if_needed(c, demo_user, "patient-demo")
 
     c.execute("SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 1))")
 
@@ -361,6 +440,7 @@ def init_postgres_db(conn):
             74,
             "admin",
             "Администрация",
+            1,
         ),
         (
             "doctor-demo",
@@ -375,18 +455,35 @@ def init_postgres_db(conn):
             62,
             "doctor",
             "Терапия",
+            0,
+        ),
+        (
+            "lab-demo",
+            "Лаборант Densaulyq",
+            "890303400003",
+            "03.03.1989",
+            "III+",
+            "+7 700 000 00 03",
+            "lab@densaulyq.local",
+            "г. Алматы, лаборатория Densaulyq",
+            170,
+            65,
+            "lab",
+            "Лаборатория",
+            0,
         ),
     ]
-    for username, name, iin, dob, blood_type, phone, email, address, height, weight, role, department in demo_accounts:
+    for username, name, iin, dob, blood_type, phone, email, address, height, weight, role, department, two_factor_enabled in demo_accounts:
         user = c.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
         if not user:
             c.execute(
                 """
                 INSERT INTO users (
                     name, username, password_hash, iin, dob, blood_type, phone,
-                    email, address, height, weight, role, is_active, department
+                    email, address, height, weight, role, is_active, department,
+                    email_verified, phone_verified, two_factor_enabled
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 1, 1, ?)
                 """,
                 (
                     name,
@@ -402,18 +499,19 @@ def init_postgres_db(conn):
                     weight,
                     role,
                     department,
+                    two_factor_enabled,
                 ),
             )
         else:
             c.execute(
                 """
                 UPDATE users
-                SET role=?, is_active=1, department=COALESCE(department, ?)
+                SET role=?, is_active=1, department=COALESCE(department, ?), two_factor_enabled=?
                 WHERE username=?
                 """,
-                (role, department, username),
+                (role, department, two_factor_enabled, username),
             )
-            seed_demo_password(c, username)
+            seed_demo_password_if_needed(c, user, username)
 
     doctor_demo = c.execute("SELECT id, name, department FROM users WHERE username='doctor-demo'").fetchone()
 
@@ -506,6 +604,8 @@ def init_postgres_db(conn):
     c.execute("SELECT setval(pg_get_serial_sequence('appointments', 'id'), COALESCE((SELECT MAX(id) FROM appointments), 1))")
     c.execute("SELECT setval(pg_get_serial_sequence('referrals', 'id'), COALESCE((SELECT MAX(id) FROM referrals), 1))")
     c.execute("SELECT setval(pg_get_serial_sequence('chat_history', 'id'), COALESCE((SELECT MAX(id) FROM chat_history), 1))")
+    c.execute("SELECT setval(pg_get_serial_sequence('verification_codes', 'id'), COALESCE((SELECT MAX(id) FROM verification_codes), 1))")
+    c.execute("SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))")
     conn.commit()
     conn.close()
 
@@ -536,6 +636,9 @@ def init_db():
             role TEXT DEFAULT 'user',
             is_active INTEGER DEFAULT 1,
             department TEXT,
+            email_verified INTEGER DEFAULT 0,
+            phone_verified INTEGER DEFAULT 0,
+            two_factor_enabled INTEGER DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -546,6 +649,9 @@ def init_db():
     ensure_column(conn, "users", "role", "role TEXT DEFAULT 'user'")
     ensure_column(conn, "users", "is_active", "is_active INTEGER DEFAULT 1")
     ensure_column(conn, "users", "department", "department TEXT")
+    ensure_column(conn, "users", "email_verified", "email_verified INTEGER DEFAULT 0")
+    ensure_column(conn, "users", "phone_verified", "phone_verified INTEGER DEFAULT 0")
+    ensure_column(conn, "users", "two_factor_enabled", "two_factor_enabled INTEGER DEFAULT 0")
 
     c.execute(
         """
@@ -656,12 +762,67 @@ def init_db():
         CREATE TABLE IF NOT EXISTS auth_sessions (
             token TEXT PRIMARY KEY,
             user_id INTEGER NOT NULL,
+            csrf_token TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             last_seen_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
         """
     )
+    ensure_column(conn, "auth_sessions", "csrf_token", "csrf_token TEXT")
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS verification_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            channel TEXT NOT NULL,
+            code TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS two_factor_challenges (
+            challenge_token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            code TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            actor_user_id INTEGER,
+            action TEXT NOT NULL,
+            entity_type TEXT,
+            entity_id INTEGER,
+            metadata TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(actor_user_id) REFERENCES users(id)
+        )
+        """
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at)")
 
     seed_role_permissions(c)
     c.execute("UPDATE users SET role='user' WHERE role IS NULL OR TRIM(role)=''")
@@ -706,7 +867,7 @@ def init_db():
             WHERE id=1
             """
         )
-        seed_demo_password(c, "patient-demo")
+        seed_demo_password_if_needed(c, demo_user, "patient-demo")
 
     admin_user = c.execute("SELECT * FROM users WHERE username='admin-demo'").fetchone()
     if not admin_user:
@@ -714,9 +875,10 @@ def init_db():
             """
             INSERT INTO users (
                 name, username, password_hash, iin, dob, blood_type, phone,
-                email, address, height, weight, role, is_active, department
+                email, address, height, weight, role, is_active, department,
+                email_verified, phone_verified, two_factor_enabled
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1)
             """,
             (
                 "Администратор Densaulyq",
@@ -741,11 +903,12 @@ def init_db():
             UPDATE users
             SET role='admin',
                 is_active=1,
-                department=COALESCE(department, 'Администрация')
+                department=COALESCE(department, 'Администрация'),
+                two_factor_enabled=1
             WHERE username='admin-demo'
             """
         )
-        seed_demo_password(c, "admin-demo")
+        seed_demo_password_if_needed(c, admin_user, "admin-demo")
 
     doctor_user = c.execute("SELECT * FROM users WHERE username='doctor-demo'").fetchone()
     if not doctor_user:
@@ -784,7 +947,47 @@ def init_db():
             WHERE username='doctor-demo'
             """
         )
-        seed_demo_password(c, "doctor-demo")
+        seed_demo_password_if_needed(c, doctor_user, "doctor-demo")
+
+    lab_user = c.execute("SELECT * FROM users WHERE username='lab-demo'").fetchone()
+    if not lab_user:
+        c.execute(
+            """
+            INSERT INTO users (
+                name, username, password_hash, iin, dob, blood_type, phone,
+                email, address, height, weight, role, is_active, department,
+                email_verified, phone_verified, two_factor_enabled
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 0)
+            """,
+            (
+                "Лаборант Densaulyq",
+                "lab-demo",
+                hash_password(DEMO_CREDENTIALS["lab-demo"]),
+                "890303400003",
+                "03.03.1989",
+                "III+",
+                "+7 700 000 00 03",
+                "lab@densaulyq.local",
+                "г. Алматы, лаборатория Densaulyq",
+                170,
+                65,
+                "lab",
+                1,
+                "Лаборатория",
+            ),
+        )
+    else:
+        c.execute(
+            """
+            UPDATE users
+            SET role='lab',
+                is_active=1,
+                department=COALESCE(department, 'Лаборатория')
+            WHERE username='lab-demo'
+            """
+        )
+        seed_demo_password_if_needed(c, lab_user, "lab-demo")
 
     doctor_demo = c.execute("SELECT id, name, department FROM users WHERE username='doctor-demo'").fetchone()
 

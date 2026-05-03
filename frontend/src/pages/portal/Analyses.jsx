@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { apiGet, apiPut } from '../../api.js'
-import { badgeForStatus, mapAnalysesList, formatAnalysisResultsText, parseAnalysisResultsText } from '../../utils.jsx'
+import { badgeForStatus, mapAnalysesList, formatAnalysisResultsText, getAnalysisStatusOptions, parseAnalysisResultsText } from '../../utils.jsx'
 import { DoctorDashboard } from './Dashboard.jsx'
 
 // ── ANALYSES ──
@@ -13,7 +13,7 @@ export function Analyses({ analyses }) {
   const [adminAnalyses, setAdminAnalyses] = useState([])
   const [adminOffset, setAdminOffset] = useState(0)
   const adminLimit = 20
-  const [editId, setEditId] = useState(null), [editStatus, setEditStatus] = useState(''), [editNote, setEditNote] = useState(''), [editResults, setEditResults] = useState(''), [editDate, setEditDate] = useState(''), [editVisible, setEditVisible] = useState(true)
+  const [editId, setEditId] = useState(null), [editStatus, setEditStatus] = useState(''), [editCurrentStatus, setEditCurrentStatus] = useState(''), [editNote, setEditNote] = useState(''), [editResults, setEditResults] = useState(''), [editDate, setEditDate] = useState(''), [editVisible, setEditVisible] = useState(true)
 
   const loadAdminAnalyses = async (nextOffset = adminOffset) => {
     const d = await apiGet('/admin/analyses', { limit: adminLimit, offset: nextOffset })
@@ -27,7 +27,7 @@ export function Analyses({ analyses }) {
   if (isDoctor) return <DoctorAnalysesPage />
 
   if (isAdmin) {
-    const openEdit = (a) => { setEditId(a.id); setEditStatus(a.statusRaw||a.status); setEditNote(a.labNote||''); setEditResults(formatAnalysisResultsText(a.results)); setEditDate(a.readyAt||a.date||''); setEditVisible(a.isVisibleToPatient) }
+    const openEdit = (a) => { const rawStatus = a.statusRaw||a.status; setEditId(a.id); setEditStatus(rawStatus); setEditCurrentStatus(rawStatus); setEditNote(a.labNote||''); setEditResults(formatAnalysisResultsText(a.results)); setEditDate(a.readyAt||a.date||''); setEditVisible(a.isVisibleToPatient) }
     const saveEdit = async () => {
       let results
       try { results=parseAnalysisResultsText(editResults) } catch(e) { toast(e.message); return }
@@ -41,7 +41,7 @@ export function Analyses({ analyses }) {
             <div className="card-body" style={{padding:0}}>
               <table className="tbl"><thead><tr><th>Patient</th><th>Analysis</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>{adminAnalyses.slice(0,10).map(a=>(
-                  <tr key={a.id}><td><div style={{fontWeight:600}}>{a.patientName||'Patient'}</div><div style={{fontSize:12,color:'#64748b'}}>{a.patientUsername||'—'}</div></td><td><div style={{fontWeight:500}}>{a.name}</div><div style={{fontSize:12,color:'#64748b'}}>{a.date||'—'} · {a.doctor||'—'}</div></td><td><span className={`badge ${badgeForStatus(a.status)}`}>{a.status}</span></td><td><button className="btn btn-secondary btn-sm" onClick={()=>openEdit(a)}>Update</button></td></tr>
+                  <tr key={a.id}><td><div style={{fontWeight:600}}>{a.patientName||'Patient'}</div><div style={{fontSize:12,color:'#64748b'}}>{a.patientUsername||'—'}</div></td><td><div style={{fontWeight:500}}>{a.name}</div><div style={{fontSize:12,color:'#64748b'}}>{a.date||'—'} · {a.doctor||'—'}</div></td><td><span className={`badge ${badgeForStatus(a.status)}`}>{a.status}</span></td><td>{a.statusRaw==='проверено'?<span className="badge b-gray">Reviewed</span>:<button className="btn btn-secondary btn-sm" onClick={()=>openEdit(a)}>Update</button>}</td></tr>
                 ))}{!adminAnalyses.length&&<tr><td colSpan="4"><div className="empty">No analyses in the queue.</div></td></tr>}</tbody>
               </table>
               <div style={{display:'flex',justifyContent:'space-between',padding:'10px 16px'}}>
@@ -51,7 +51,7 @@ export function Analyses({ analyses }) {
             </div>
           </div>
         </div>
-        {editId&&<div className="modal-overlay"><div className="modal"><div className="modal-hd"><h3>Update analysis</h3><button className="modal-close" onClick={()=>setEditId(null)}>✕</button></div><div className="modal-bd"><div className="frow"><div className="fg"><label>Status</label><select value={editStatus} onChange={e=>setEditStatus(e.target.value)}><option value="назначен">Ordered</option><option value="в обработке">Processing</option><option value="готово">Ready</option></select></div><div className="fg"><label>Ready date</label><input type="date" value={editDate} onChange={e=>setEditDate(e.target.value)}/></div></div><div className="fg"><label>Lab note</label><textarea value={editNote} onChange={e=>setEditNote(e.target.value)} placeholder="Lab comment"/></div><div className="fg"><label>Results</label><textarea value={editResults} onChange={e=>setEditResults(e.target.value)} placeholder="Parameter | Value | Unit | Range | ok/abnormal"/></div><div className="note">Each result line: <code>Parameter | Value | Unit | Range | ok/abnormal</code></div><div className="fg" style={{marginTop:12}}><label><input type="checkbox" checked={editVisible} onChange={e=>setEditVisible(e.target.checked)} style={{marginRight:8}}/>Visible to patient</label></div></div><div className="modal-ft"><button className="btn btn-secondary" onClick={()=>setEditId(null)}>Cancel</button><button className="btn btn-primary" onClick={saveEdit}>Save</button></div></div></div>}
+        {editId&&<div className="modal-overlay"><div className="modal"><div className="modal-hd"><h3>Update analysis</h3><button className="modal-close" onClick={()=>setEditId(null)}>✕</button></div><div className="modal-bd"><div className="frow"><div className="fg"><label>Status</label><select value={editStatus} onChange={e=>setEditStatus(e.target.value)}>{getAnalysisStatusOptions(editCurrentStatus).map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></div><div className="fg"><label>Ready date</label><input type="date" value={editDate} onChange={e=>setEditDate(e.target.value)}/></div></div><div className="fg"><label>Lab note</label><textarea value={editNote} onChange={e=>setEditNote(e.target.value)} placeholder="Lab comment"/></div><div className="fg"><label>Results</label><textarea value={editResults} onChange={e=>setEditResults(e.target.value)} placeholder="Parameter | Value | Unit | Range | ok/abnormal"/></div><div className="note">Each result line: <code>Parameter | Value | Unit | Range | ok/abnormal</code></div><div className="fg" style={{marginTop:12}}><label><input type="checkbox" checked={editVisible} onChange={e=>setEditVisible(e.target.checked)} style={{marginRight:8}}/>Visible to patient</label></div></div><div className="modal-ft"><button className="btn btn-secondary" onClick={()=>setEditId(null)}>Cancel</button><button className="btn btn-primary" onClick={saveEdit}>Save</button></div></div></div>}
       </div>
     )
   }

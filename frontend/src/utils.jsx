@@ -24,6 +24,24 @@ export const ANALYSIS_NAME_OPTIONS = [
   'Thyroid panel','Lipid panel','Liver panel','Vitamin D',
 ]
 
+export const ANALYSIS_STATUS_OPTIONS = [
+  { value: 'назначен', label: 'Ordered' },
+  { value: 'в обработке', label: 'Processing' },
+  { value: 'готово', label: 'Ready' },
+]
+
+const ANALYSIS_STATUS_TRANSITIONS = {
+  'назначен': ['назначен', 'в обработке'],
+  'в обработке': ['в обработке', 'готово'],
+  'готово': ['готово'],
+  'проверено': ['проверено'],
+}
+
+export function getAnalysisStatusOptions(currentStatus) {
+  const allowed = ANALYSIS_STATUS_TRANSITIONS[currentStatus] || [currentStatus].filter(Boolean)
+  return ANALYSIS_STATUS_OPTIONS.filter(option => allowed.includes(option.value))
+}
+
 export function t(value) {
   if (value == null) return value
   let out = String(value)
@@ -51,6 +69,29 @@ export function monthShort(isoDate) {
   const date = new Date(isoDate + 'T00:00:00')
   if (Number.isNaN(date.getTime())) return '---'
   return date.toLocaleDateString('ru-RU', {month:'short'}).replace('.','')
+}
+
+function appointmentTimestamp(isoDate, time) {
+  if (!isoDate) return 0
+  const safeTime = /^\d{2}:\d{2}$/.test(time || '') ? time : '00:00'
+  const date = new Date(`${isoDate}T${safeTime}:00`)
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime()
+}
+
+export function isUpcomingActiveAppointment(item) {
+  if (!item || item.status === 'cancelled') return false
+  const timestamp = item.timestamp || appointmentTimestamp(item.dateISO, item.time)
+  return timestamp >= Date.now()
+}
+
+function sortAppointmentsForDisplay(items) {
+  return [...items].sort((a, b) => {
+    const aUpcoming = isUpcomingActiveAppointment(a)
+    const bUpcoming = isUpcomingActiveAppointment(b)
+    if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1
+    if (aUpcoming && bUpcoming) return a.timestamp - b.timestamp
+    return b.timestamp - a.timestamp
+  })
 }
 
 export function getAnalysisDisplayDate(item) {
@@ -83,14 +124,15 @@ export function badgeForStatus(status) {
 }
 
 export function getRoleChip(role) {
-  const cls = role === 'admin' ? 'admin' : role === 'doctor' ? 'doctor' : 'user'
-  const label = role === 'admin' ? 'Admin' : role === 'doctor' ? 'Doctor' : 'Patient'
+  const cls = role === 'admin' ? 'admin' : role === 'doctor' ? 'doctor' : role === 'lab' ? 'lab' : 'user'
+  const label = role === 'admin' ? 'Admin' : role === 'doctor' ? 'Doctor' : role === 'lab' ? 'Lab' : 'Patient'
   return <span className={`role-chip ${cls}`}>{label}</span>
 }
 
 export function formatRole(role) {
   if (role === 'admin') return 'Admin'
   if (role === 'doctor') return 'Doctor'
+  if (role === 'lab') return 'Lab'
   return 'Patient'
 }
 
@@ -119,6 +161,9 @@ export function mapUser(user) {
     role: u.role || 'user',
     department: u.department || '',
     is_active: u.is_active !== false,
+    email_verified: u.email_verified === true,
+    phone_verified: u.phone_verified === true,
+    two_factor_enabled: u.two_factor_enabled === true,
   }
 }
 
@@ -144,8 +189,10 @@ export function mapAnalysesList(analyses) {
 }
 
 export function mapAppointmentsList(appointments) {
-  return sortByDateAsc((appointments || []).map(item => {
+  return sortAppointmentsForDisplay((appointments || []).map(item => {
     const iso = normalizeDate(item.date)
+    const status = t(item.status || 'pending')
+    const timestamp = appointmentTimestamp(iso, item.time)
     return {
       id: item.id,
       doctor: t(item.doctor),
@@ -154,10 +201,12 @@ export function mapAppointmentsList(appointments) {
       mon: monthShort(iso),
       time: item.time || '--:--',
       place: t(item.place || 'TBD'),
-      status: t(item.status || 'pending'),
+      status,
+      statusRaw: item.status || '',
       dateISO: iso,
+      timestamp,
     }
-  }), 'dateISO')
+  }).map(item => ({ ...item, isUpcomingActive: isUpcomingActiveAppointment(item) })))
 }
 
 export function mapReferralsList(referrals) {

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Header, Query
+from fastapi import APIRouter, Header, Query, Response
 
 from app_helpers import get_current_user
 from db import get_db
@@ -49,22 +49,24 @@ def doctor_review_analysis(
         db.close()
 
 
-@router.get("/admin/analyses")
-def admin_list_analyses(
+@router.get("/lab/analyses")
+def lab_list_analyses(
     authorization: Optional[str] = Header(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    query: str = "",
+    status: str = "",
 ):
     db = get_db()
     try:
         actor = get_current_user(db, authorization)
-        return analyses_service.list_admin_analyses(db, actor, limit=limit, offset=offset)
+        return analyses_service.list_lab_analyses(db, actor, limit=limit, offset=offset, query=query, status=status)
     finally:
         db.close()
 
 
-@router.put("/admin/analyses/{analysis_id}")
-def admin_update_analysis(
+@router.put("/lab/analyses/{analysis_id}")
+def lab_update_analysis(
     analysis_id: int,
     data: AnalysisLabUpdate,
     authorization: Optional[str] = Header(default=None),
@@ -72,6 +74,49 @@ def admin_update_analysis(
     db = get_db()
     try:
         actor = get_current_user(db, authorization)
-        return analyses_service.update_admin_analysis(db, actor, analysis_id, data)
+        return analyses_service.update_lab_analysis(db, actor, analysis_id, data)
+    finally:
+        db.close()
+
+
+@router.get("/lab/analyses/export")
+def lab_export_analyses(authorization: Optional[str] = Header(default=None)):
+    db = get_db()
+    try:
+        actor = get_current_user(db, authorization)
+        csv_text = analyses_service.export_lab_analyses_csv(db, actor)
+        return Response(
+            content=csv_text,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=densaulyq-analyses.csv"},
+        )
+    finally:
+        db.close()
+
+
+@router.get("/admin/analyses")
+def deprecated_admin_list_analyses(
+    authorization: Optional[str] = Header(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+):
+    db = get_db()
+    try:
+        actor = get_current_user(db, authorization)
+        return analyses_service.list_lab_analyses(db, actor, limit=limit, offset=offset)
+    finally:
+        db.close()
+
+
+@router.put("/admin/analyses/{analysis_id}")
+def deprecated_admin_update_analysis(
+    analysis_id: int,
+    data: AnalysisLabUpdate,
+    authorization: Optional[str] = Header(default=None),
+):
+    db = get_db()
+    try:
+        actor = get_current_user(db, authorization)
+        return analyses_service.update_lab_analysis(db, actor, analysis_id, data)
     finally:
         db.close()

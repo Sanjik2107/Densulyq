@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { apiGet, apiPut } from '../../api.js'
+import { apiGet, apiPost, apiPut } from '../../api.js'
 import { getRoleChip, formatRole, mapUser } from '../../utils.jsx'
 
 // ── PROFILE ──
@@ -11,8 +11,12 @@ export function Profile() {
   const [data, setData] = useState({})
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [verifyCode, setVerifyCode] = useState('')
+  const [verifyChannel, setVerifyChannel] = useState('email')
 
-  useEffect(()=>{ if(user?.id) apiGet('/user/'+user.id).then(u=>setData(mapUser(u))) },[user?.id])
+  useEffect(()=>{
+    if(user?.id) apiGet('/user/'+user.id).then(u=>setData(mapUser(u))).catch(e=>toast(e.message || 'Failed to load profile.'))
+  },[toast, user?.id])
 
   const save = async () => {
     setLoading(true)
@@ -28,6 +32,34 @@ export function Profile() {
   }
 
   const bmi = (() => { const h=Number(data.height),w=Number(data.weight); if(!h||!w)return '—'; return (w/((h/100)**2)).toFixed(1) })()
+
+  const requestVerification = async (channel) => {
+    try {
+      const result = await apiPost('/auth/verification/request', { channel })
+      setVerifyChannel(channel)
+      toast(result.dev_code ? `Dev ${channel} code: ${result.dev_code}` : 'Verification code sent.', 'success')
+    } catch (e) { toast(e.message) }
+  }
+
+  const confirmVerification = async () => {
+    try {
+      await apiPost('/auth/verification/confirm', { channel: verifyChannel, code: verifyCode })
+      toast('Contact verified.', 'success')
+      const u = await apiGet('/user/'+user.id)
+      setData(mapUser(u))
+      setContext({...context, user: {...context.user, ...u}})
+      setVerifyCode('')
+    } catch (e) { toast(e.message) }
+  }
+
+  const toggle2fa = async () => {
+    try {
+      const next = !user?.two_factor_enabled
+      await apiPut('/auth/2fa', { enabled: next })
+      setContext({...context, user: {...context.user, two_factor_enabled: next}})
+      toast(next ? '2FA enabled.' : '2FA disabled.', 'success')
+    } catch (e) { toast(e.message) }
+  }
 
   const Field = ({label,field,type='text'}) => (
     <div style={{marginBottom:12}}>
@@ -63,6 +95,18 @@ export function Profile() {
             {[['Role',formatRole(user?.role)],['Department',user?.department||'—'],['Permissions',(context?.permissions||[]).join(', ')||'—']].map(([k,v])=>(
               <div key={k} className="kv"><span style={{fontSize:13,color:'#64748b'}}>{k}</span><span style={{fontSize:13,fontWeight:500,textAlign:'right'}}>{v}</span></div>
             ))}
+            <div className="kv"><span style={{fontSize:13,color:'#64748b'}}>Email verified</span><span className={`badge ${user?.email_verified?'b-green':'b-warn'}`}>{user?.email_verified?'yes':'no'}</span></div>
+            <div className="kv"><span style={{fontSize:13,color:'#64748b'}}>Phone verified</span><span className={`badge ${user?.phone_verified?'b-green':'b-warn'}`}>{user?.phone_verified?'yes':'no'}</span></div>
+            <div className="inline-actions" style={{marginTop:12}}>
+              <button className="btn btn-secondary btn-sm" onClick={()=>requestVerification('email')}>Verify email</button>
+              <button className="btn btn-secondary btn-sm" onClick={()=>requestVerification('phone')}>Verify phone</button>
+              <button className="btn btn-secondary btn-sm" onClick={toggle2fa}>{user?.two_factor_enabled?'Disable':'Enable'} 2FA</button>
+            </div>
+            <div className="frow" style={{marginTop:12}}>
+              <div className="fg"><label>Channel</label><select value={verifyChannel} onChange={e=>setVerifyChannel(e.target.value)}><option value="email">Email</option><option value="phone">Phone</option></select></div>
+              <div className="fg"><label>Code</label><input value={verifyCode} onChange={e=>setVerifyCode(e.target.value)} placeholder="000000"/></div>
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={confirmVerification}>Confirm code</button>
           </div></div>
         </div>
       </div>

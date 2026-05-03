@@ -7,6 +7,7 @@ from app_helpers import (
     ensure_active,
     get_doctor_booked_slots,
     normalize_calendar_date,
+    normalize_optional_string,
     normalize_slot_time,
     patient_has_slot_conflict,
     require_permission,
@@ -70,7 +71,7 @@ def create_appointment(db, actor, data: AppointmentCreate):
             doctor["department"] or doctor["name"],
             date_iso,
             time_hhmm,
-            data.reason,
+            normalize_optional_string(data.reason),
         ),
     )
     db.commit()

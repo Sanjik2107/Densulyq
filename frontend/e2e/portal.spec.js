@@ -17,7 +17,16 @@ async function login(page, username, password) {
   await controlIn(form, 'Username', 'input').fill(username)
   await controlIn(form, 'Password', 'input').fill(password)
   await page.getByRole('button', { name: 'Login' }).click()
-  await expect(page.getByRole('heading', { name: /Dashboard|Admin panel/ })).toBeVisible()
+  await page.locator('.auth-box input[placeholder="000000"], .topbar h1').first().waitFor({ state: 'visible' })
+  const mfaInput = form.locator('input[placeholder="000000"]')
+  if (await mfaInput.isVisible().catch(() => false)) {
+    const hint = await form.textContent()
+    const code = hint.match(/\d{6}/)?.[0]
+    expect(code).toBeTruthy()
+    await mfaInput.fill(code)
+    await page.getByRole('button', { name: 'Verify' }).click()
+  }
+  await expect(page.getByRole('heading', { name: /Dashboard|Admin panel|Lab workspace/ })).toBeVisible()
 }
 
 async function authToken(page) {
@@ -65,11 +74,18 @@ test('doctor can select patient and open book visit modal', async ({ page }) => 
   await expect(controlIn(modal, 'Patient', 'input')).toHaveValue('Алибек Джаксыбеков')
 })
 
-test('admin can open user management and analysis update modal', async ({ page }) => {
+test('admin can open user management and audit log', async ({ page }) => {
   await login(page, 'admin-demo', 'admin123')
 
   await expect(page.getByRole('heading', { name: 'Admin panel' })).toBeVisible()
   await expect(page.getByText('Create new user')).toBeVisible()
+  await expect(page.getByText('Audit log')).toBeVisible()
+})
+
+test('lab can open analysis update modal', async ({ page }) => {
+  await login(page, 'lab-demo', 'lab123')
+
+  await expect(page.getByRole('heading', { name: 'Lab workspace' })).toBeVisible()
   await page.getByRole('button', { name: 'Update' }).first().click()
   await expect(page.getByRole('heading', { name: 'Update analysis' })).toBeVisible()
 })

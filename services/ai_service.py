@@ -1,19 +1,23 @@
 import json
 
 import httpx
+from fastapi import HTTPException
 
-from app_helpers import get_user_or_404, require_user_scope, serialize_user
+from app_helpers import get_user_or_404, parse_analysis_results, require_user_scope, serialize_user
 from config import ANALYSIS_STATUS_READY, ANALYSIS_STATUS_REVIEWED, GEMINI_API_KEY
 from schemas import ChatRequest
 
 
 async def chat(db, actor, data: ChatRequest):
+    message = data.message.strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Введите сообщение")
     user_id = data.user_id or actor["id"]
     require_user_scope(db, actor, user_id, cross_user_permission="users:read")
 
     db.execute(
         "INSERT INTO chat_history (user_id, role, message) VALUES (?, ?, ?)",
-        (user_id, "user", data.message),
+        (user_id, "user", message),
     )
     db.commit()
 
@@ -75,7 +79,7 @@ async def chat(db, actor, data: ChatRequest):
         "Если данных недостаточно, задай только 1-2 уточняющих вопроса."
     )
 
-    message_lower = data.message.lower()
+    message_lower = message.lower()
     direct_analysis_triggers = [
         "analyze my test results",
         "analyse my test results",
@@ -124,7 +128,7 @@ async def chat(db, actor, data: ChatRequest):
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}",
-                    json={"contents": [{"parts": [{"text": f"{enriched_prompt}\n\nВопрос: {data.message}"}]}]},
+                    json={"contents": [{"parts": [{"text": f"{enriched_prompt}\n\nВопрос: {message}"}]}]},
                 )
                 result = response.json()
                 reply = result["candidates"][0]["content"]["parts"][0]["text"]
@@ -148,10 +152,14 @@ async def health_score(db, actor, user_id: int):
     ).fetchall()
 
     analyses_text = ""
+    total_results = 0
+    abnormal_results = 0
     for row in analyses_rows:
         analysis = dict(row)
-        results = json.loads(analysis["results"]) if analysis["results"] else []
+        results = parse_analysis_results(analysis.get("results"))
         bad_results = [result for result in results if not result.get("ok")]
+        total_results += len(results)
+        abnormal_results += len(bad_results)
         analyses_text += f"\n{analysis['name']} ({analysis['date']}): "
         if bad_results:
             analyses_text += "Отклонения: " + ", ".join(
@@ -173,10 +181,20 @@ async def health_score(db, actor, user_id: int):
 {{"score": число, "status": "строка", "recommendations": ["...", "..."], "doctors": ["..."]}}"""
 
     if not GEMINI_API_KEY:
+        penalty = round((abnormal_results / total_results) * 35) if total_results else 8
+        score = max(45, min(92, 90 - penalty))
+        status = "Хорошо" if score >= 75 else "Нужно внимание"
+        recommendations = [
+            "Обсудите отклонения с терапевтом, если они сохраняются или есть симптомы",
+            "Повторите ключевые анализы по назначению врача",
+            "Следите за сном, питанием, питьевым режимом и давлением",
+        ]
+        if not abnormal_results:
+            recommendations = ["Продолжайте профилактические осмотры", "Поддерживайте стабильный режим сна и физической активности"]
         return {
-            "score": 74,
-            "status": "Хорошо",
-            "recommendations": ["Настройте GEMINI_API_KEY для AI-оценки", "Продолжайте наблюдение у врача"],
+            "score": score,
+            "status": status,
+            "recommendations": recommendations,
             "doctors": ["Терапевт"],
             "error": "GEMINI_API_KEY is not configured",
         }

@@ -10,10 +10,12 @@ function getStoredAuth() {
     const parsed = raw ? JSON.parse(raw) : {}
     return {
       token: typeof parsed.token === 'string' ? parsed.token : '',
+      csrfToken: typeof parsed.csrfToken === 'string' ? parsed.csrfToken : '',
+      session: parsed.session === true,
       portal: typeof parsed.portal === 'string' ? parsed.portal : 'patient',
       page: typeof parsed.page === 'string' ? parsed.page : '',
     }
-  } catch { return { token: '', portal: 'patient', page: '' } }
+  } catch { return { token: '', csrfToken: '', session: false, portal: 'patient', page: '' } }
 }
 
 function setStoredAuth(state) {
@@ -31,7 +33,7 @@ export function AuthProvider({ children }) {
 
   const clearAuthState = useCallback(() => {
     clearStoredAuth()
-    setAuthState({ token: '', portal: 'patient', page: '' })
+    setAuthState({ token: '', csrfToken: '', session: false, portal: 'patient', page: '' })
     setContext({ user: null, permissions: [], portal: 'patient' })
   }, [])
 
@@ -41,16 +43,30 @@ export function AuthProvider({ children }) {
   }, [clearAuthState])
 
   useEffect(() => {
-    if (!authState.token) { setLoading(false); return }
+    if (!authState.token && !authState.session) { setLoading(false); return }
     apiGet('/auth/me')
       .then(data => setContext(data))
       .catch(() => clearAuthState())
       .finally(() => setLoading(false))
-  }, [authState.token, clearAuthState])
+  }, [authState.session, authState.token, clearAuthState])
 
   const login = async (username, password) => {
     const data = await apiPost('/auth/login', { username, password }, true)
-    const newState = { token: data.token, portal: data.portal, page: data.user?.role === 'admin' ? 'admin' : 'dashboard' }
+    if (data.mfa_required) return data
+    const defaultPage = data.user?.role === 'admin' ? 'admin' : data.user?.role === 'lab' ? 'lab' : 'dashboard'
+    const newState = { token: data.token, portal: data.portal, page: defaultPage }
+    newState.csrfToken = data.csrf_token || ''
+    newState.session = true
+    setStoredAuth(newState)
+    setAuthState(newState)
+    setContext({ user: data.user, permissions: data.permissions || [], portal: data.portal })
+    return data
+  }
+
+  const verifyMfa = async (challengeToken, code) => {
+    const data = await apiPost('/auth/2fa/verify', { challenge_token: challengeToken, code }, true)
+    const defaultPage = data.user?.role === 'admin' ? 'admin' : data.user?.role === 'lab' ? 'lab' : 'dashboard'
+    const newState = { token: data.token, csrfToken: data.csrf_token || '', session: true, portal: data.portal, page: defaultPage }
     setStoredAuth(newState)
     setAuthState(newState)
     setContext({ user: data.user, permissions: data.permissions || [], portal: data.portal })
@@ -59,7 +75,7 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     const data = await apiPost('/auth/register', payload, true)
-    const newState = { token: data.token, portal: data.portal, page: 'dashboard' }
+    const newState = { token: data.token, csrfToken: data.csrf_token || '', session: true, portal: data.portal, page: 'dashboard' }
     setStoredAuth(newState)
     setAuthState(newState)
     setContext({ user: data.user, permissions: data.permissions || [], portal: data.portal })
@@ -71,21 +87,24 @@ export function AuthProvider({ children }) {
     clearAuthState()
   }
 
-  const updateStoredPage = (page) => {
-    const next = { ...authState, page }
-    setStoredAuth(next)
-    setAuthState(next)
-  }
+  const updateStoredPage = useCallback((page) => {
+    setAuthState(current => {
+      const next = { ...current, page }
+      setStoredAuth(next)
+      return next
+    })
+  }, [])
 
   return (
     <AuthContext.Provider value={{
       authState, context, loading,
       user: context.user, permissions: context.permissions,
       isAdmin: context.user?.role === 'admin',
+      isLab: context.user?.role === 'lab',
       isDoctor: context.user?.role === 'doctor',
       isPatient: context.user?.role === 'user',
       isAuthenticated: !!authState.token,
-      login, register, logout, updateStoredPage,
+      login, verifyMfa, register, logout, updateStoredPage,
       setContext,
     }}>
       {children}

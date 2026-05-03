@@ -24,7 +24,11 @@ def serialize_user(row: sqlite3.Row):
     data.pop("password_hash", None)
     data.pop("session_created_at", None)
     data.pop("session_last_seen_at", None)
+    data.pop("session_csrf_token", None)
     data["is_active"] = bool(data.get("is_active"))
+    data["email_verified"] = bool(data.get("email_verified", False))
+    data["phone_verified"] = bool(data.get("phone_verified", False))
+    data["two_factor_enabled"] = bool(data.get("two_factor_enabled", False))
     return data
 
 
@@ -237,7 +241,8 @@ def get_current_user(db: sqlite3.Connection, authorization: Optional[str]):
         SELECT
             users.*,
             auth_sessions.created_at AS session_created_at,
-            auth_sessions.last_seen_at AS session_last_seen_at
+            auth_sessions.last_seen_at AS session_last_seen_at,
+            auth_sessions.csrf_token AS session_csrf_token
         FROM auth_sessions
         JOIN users ON users.id = auth_sessions.user_id
         WHERE auth_sessions.token = ?
@@ -263,14 +268,15 @@ def get_current_user(db: sqlite3.Connection, authorization: Optional[str]):
 
 def issue_session_token(db: sqlite3.Connection, user_id: int):
     token = secrets.token_urlsafe(32)
+    csrf_token = secrets.token_urlsafe(24)
     db.execute(
         """
-        INSERT INTO auth_sessions (token, user_id)
-        VALUES (?, ?)
+        INSERT INTO auth_sessions (token, user_id, csrf_token)
+        VALUES (?, ?, ?)
         """,
-        (token, user_id),
+        (token, user_id, csrf_token),
     )
-    return token
+    return token, csrf_token
 
 
 def validate_role(role: str):
@@ -282,6 +288,8 @@ def validate_role(role: str):
 def infer_portal(role: str):
     if role == "admin":
         return "admin"
+    if role == "lab":
+        return "lab"
     if role == "doctor":
         return "doctor"
     return "patient"
@@ -314,6 +322,12 @@ def normalize_optional_string(value: Optional[str]):
         return None
     cleaned = value.strip()
     return cleaned or None
+
+
+def normalize_optional_value(value: Any):
+    if value is None:
+        return None
+    return normalize_optional_string(str(value))
 
 
 def validate_iin(value: Optional[str]):
@@ -360,16 +374,16 @@ def sanitize_analysis_results(results: Optional[list[dict[str, Any]]]):
     for item in results:
         if not isinstance(item, dict):
             raise HTTPException(status_code=400, detail="Некорректный формат результата анализа")
-        param = normalize_optional_string(str(item.get("param", "")))
-        value = normalize_optional_string(str(item.get("val", "")))
+        param = normalize_optional_value(item.get("param"))
+        value = normalize_optional_value(item.get("val"))
         if not param or value is None:
             raise HTTPException(status_code=400, detail="У результата анализа обязательны param и val")
         cleaned_results.append(
             {
                 "param": param,
                 "val": value,
-                "unit": normalize_optional_string(str(item.get("unit", ""))) or "",
-                "norm": normalize_optional_string(str(item.get("norm", ""))) or "",
+                "unit": normalize_optional_value(item.get("unit")) or "",
+                "norm": normalize_optional_value(item.get("norm")) or "",
                 "ok": coerce_result_ok(item.get("ok")),
             }
         )
@@ -419,3 +433,28 @@ def get_analysis_or_404(db: sqlite3.Connection, analysis_id: int):
     if not row:
         raise HTTPException(status_code=404, detail="Анализ не найден")
     return row
+
+
+def log_audit(
+    db: sqlite3.Connection,
+    actor: Optional[sqlite3.Row],
+    action: str,
+    *,
+    entity_type: Optional[str] = None,
+    entity_id: Optional[int] = None,
+    metadata: Optional[dict[str, Any]] = None,
+):
+    actor_id = actor["id"] if actor else None
+    db.execute(
+        """
+        INSERT INTO audit_log (actor_user_id, action, entity_type, entity_id, metadata)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            actor_id,
+            action,
+            entity_type,
+            entity_id,
+            json.dumps(metadata or {}, ensure_ascii=False),
+        ),
+    )

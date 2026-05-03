@@ -1,8 +1,8 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import APP_VERSION, CORS_ORIGINS, FRONTEND_ASSETS_DIR, FRONTEND_DIST_DIR, FRONTEND_PATH
@@ -20,10 +20,45 @@ app = FastAPI(title="Densaulyq API", version=APP_VERSION)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def cookie_auth_and_csrf(request: Request, call_next):
+    original_headers = dict(request.scope.get("headers") or [])
+    has_authorization = b"authorization" in original_headers
+    session_token = request.cookies.get("session_token")
+    if session_token and not has_authorization:
+        request.scope["headers"].append((b"authorization", f"Bearer {session_token}".encode("latin-1")))
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            public_paths = {
+                "/auth/login",
+                "/auth/register",
+                "/auth/2fa/verify",
+                "/auth/password-reset/request",
+                "/auth/password-reset/confirm",
+            }
+            if request.url.path not in public_paths:
+                csrf_header = request.headers.get("x-csrf-token", "")
+                from db import get_db
+
+                db = get_db()
+                try:
+                    row = db.execute(
+                        "SELECT csrf_token FROM auth_sessions WHERE token=?",
+                        (session_token,),
+                    ).fetchone()
+                finally:
+                    db.close()
+                if not row or not csrf_header or csrf_header != row["csrf_token"]:
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "CSRF token is missing or invalid"},
+                    )
+    return await call_next(request)
 
 app.include_router(auth_router)
 app.include_router(users_router)

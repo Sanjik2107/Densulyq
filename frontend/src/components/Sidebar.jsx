@@ -1,4 +1,5 @@
 import { useAuth } from '../context/AuthContext.jsx'
+import { useI18n } from '../context/I18nContext.jsx'
 import { formatRole } from '../utils.jsx'
 
 const USER_PAGES = [
@@ -22,11 +23,18 @@ const DOCTOR_PAGES = [
   { id:'profile', label:'My profile', group:'Account', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
 ]
 
+const LAB_PAGES = [
+  { id:'dashboard', label:'Dashboard', labelKey:'dashboard', group:'Overview', groupKey:'overview', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg> },
+  { id:'lab', label:'Lab workspace', labelKey:'lab', group:'Laboratory', groupKey:'laboratory', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 2v6l-5 9a3 3 0 002.6 4.5h8.8A3 3 0 0019 17L14 8V2"/><path d="M8 2h8"/><path d="M7 16h10"/></svg> },
+  { id:'profile', label:'My profile', labelKey:'profile', group:'Account', groupKey:'account', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+]
+
 export default function Sidebar({ currentPage, onNavigate, onLogout }) {
-  const { user, isAdmin, isDoctor } = useAuth()
+  const { user, isAdmin, isLab, isDoctor } = useAuth()
+  const { tr } = useI18n()
   if (!user) return null
 
-  const pages = isAdmin ? ADMIN_PAGES : isDoctor ? DOCTOR_PAGES : USER_PAGES
+  const pages = isAdmin ? ADMIN_PAGES : isLab ? LAB_PAGES : isDoctor ? DOCTOR_PAGES : USER_PAGES
   const groups = [...new Set(pages.map(p => p.group))]
 
   return (
@@ -38,14 +46,14 @@ export default function Sidebar({ currentPage, onNavigate, onLogout }) {
       <nav className="nav">
         {groups.map(group => (
           <div key={group} className="nav-group">
-            <div className="nav-group-label">{group}</div>
+            <div className="nav-group-label">{tr(pages.find(p => p.group === group)?.groupKey) || group}</div>
             {pages.filter(p => p.group === group).map(page => (
               <div
                 key={page.id}
                 className={`nav-item${currentPage === page.id ? ' active' : ''}`}
                 onClick={() => onNavigate(page.id)}
               >
-                {page.icon} {page.label}
+                {page.icon} {tr(page.labelKey) || page.label}
               </div>
             ))}
           </div>
@@ -61,7 +69,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout }) {
             </div>
           </div>
         </div>
-        <button className="sidebar-switch" onClick={onLogout}>Logout</button>
+        <button className="sidebar-switch" onClick={onLogout}>{tr('logout')}</button>
       </div>
     </aside>
   )

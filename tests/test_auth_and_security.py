@@ -24,7 +24,10 @@ def make_test_db():
             email TEXT,
             role TEXT DEFAULT 'user',
             is_active INTEGER DEFAULT 1,
-            department TEXT
+            department TEXT,
+            email_verified INTEGER DEFAULT 0,
+            phone_verified INTEGER DEFAULT 0,
+            two_factor_enabled INTEGER DEFAULT 0
         )
         """
     )
@@ -43,8 +46,22 @@ def make_test_db():
         CREATE TABLE auth_sessions (
             token TEXT PRIMARY KEY,
             user_id INTEGER NOT NULL,
+            csrf_token TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             last_seen_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            actor_user_id INTEGER,
+            action TEXT NOT NULL,
+            entity_type TEXT,
+            entity_id INTEGER,
+            metadata TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
         """
     )

@@ -14,12 +14,29 @@ function getToken() {
   } catch { return '' }
 }
 
+function getCsrfToken() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : {}
+    return parsed.csrfToken || ''
+  } catch { return '' }
+}
+
+function buildUrl(path) {
+  const base = API_BASE.endsWith('/') ? API_BASE : API_BASE + '/'
+  return new URL(String(path).replace(/^\/+/, ''), base)
+}
+
 async function request(path, options = {}) {
   const token = getToken()
+  const csrfToken = getCsrfToken()
   const headers = { 'Content-Type': 'application/json' }
   if (!options.skipAuth && token) headers.Authorization = 'Bearer ' + token
+  if (!options.skipAuth && csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || 'GET')) {
+    headers['X-CSRF-Token'] = csrfToken
+  }
 
-  const url = new URL(API_BASE + path)
+  const url = buildUrl(path)
   if (options.params) {
     Object.entries(options.params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v)
@@ -29,6 +46,7 @@ async function request(path, options = {}) {
   const res = await fetch(url.toString(), {
     method: options.method || 'GET',
     headers,
+    credentials: 'include',
     body: options.payload ? JSON.stringify(options.payload) : undefined,
   })
 

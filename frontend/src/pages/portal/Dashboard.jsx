@@ -14,7 +14,8 @@ function PatientDashboard({ analyses, appointments, referrals, onNavigate, onOpe
     return Math.max(55, 92 - Math.round((bad/total)*40))
   })()
   const readyAnalyses = analyses.filter(a=>['ready','reviewed'].includes(a.status)).length
-  const nextAppt = appointments[0]
+  const upcomingAppointments = appointments.filter(a=>a.isUpcomingActive)
+  const nextAppt = upcomingAppointments[0]
   const activeRefs = referrals.filter(r=>r.status==='active').length
   const pendingAnalyses = analyses.filter(a=>['ordered','processing'].includes(a.status)).length
   const abnormalCount = analyses.reduce((s,a)=>s+(a.results||[]).filter(r=>r.ok===false).length,0)
@@ -97,13 +98,13 @@ function PatientDashboard({ analyses, appointments, referrals, onNavigate, onOpe
           <div className="card">
             <div className="card-head"><div><h3>Upcoming appointments</h3><p>Your nearest visits and their status</p></div><button className="btn btn-secondary btn-sm" onClick={()=>onNavigate('appointments')}>All →</button></div>
             <div className="card-body" style={{paddingTop:10}}>
-              {appointments.length ? appointments.slice(0,3).map(item=>(
+              {upcomingAppointments.length ? upcomingAppointments.slice(0,3).map(item=>(
                 <div key={item.id} className="appt">
                   <div className="appt-date"><div className="appt-day">{item.day}</div><div className="appt-mon">{item.mon}</div></div>
                   <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{item.doctor}</div><div style={{fontSize:12,color:'#64748b'}}>{item.spec} · {item.place}</div></div>
                   <div style={{textAlign:'right'}}><div style={{fontSize:14,fontWeight:600}}>{item.time}</div><span className={`badge ${badgeForStatus(item.status)}`}>{item.status}</span></div>
                 </div>
-              )) : <div className="empty">No appointments yet.</div>}
+              )) : <div className="empty">No upcoming appointments.</div>}
             </div>
           </div>
           <div className="card">

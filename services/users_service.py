@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 from fastapi import HTTPException
 
@@ -189,9 +190,18 @@ def list_doctor_patients(db, actor, *, limit: int = 50, offset: int = 0):
             "SELECT date FROM analyses WHERE user_id=? ORDER BY date DESC LIMIT 1",
             (user_id,),
         ).fetchone()
+        today_iso = datetime.now().date().isoformat()
         next_appointment = db.execute(
-            "SELECT date, time, doctor FROM appointments WHERE user_id=? ORDER BY date, time LIMIT 1",
-            (user_id,),
+            """
+            SELECT date, time, doctor
+            FROM appointments
+            WHERE user_id=?
+              AND COALESCE(status, '')!='отменено'
+              AND date>=?
+            ORDER BY date, time
+            LIMIT 1
+            """,
+            (user_id, today_iso),
         ).fetchone()
 
         patient = serialize_user(row)

@@ -22,6 +22,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .role-chip{padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:inline-block}
 .role-chip.admin{background:#dbeafe;color:#1d4ed8}
 .role-chip.doctor{background:#ede9fe;color:#7c3aed}
+.role-chip.lab{background:#fef3c7;color:#b45309}
 .role-chip.user{background:#ccfbf1;color:#0f766e}
 
 .main{margin-left:230px;flex:1;display:flex;flex-direction:column}
@@ -267,6 +268,7 @@ body[data-theme="dark"] .b-red{background:#450a0a;color:#fca5a5}
 body[data-theme="dark"] .b-gray{background:#1f2937;color:#cbd5e1}
 body[data-theme="dark"] .role-chip.admin{background:#172554;color:#93c5fd}
 body[data-theme="dark"] .role-chip.doctor{background:#2e1065;color:#c4b5fd}
+body[data-theme="dark"] .role-chip.lab{background:#422006;color:#fde68a}
 body[data-theme="dark"] .role-chip.user{background:#134e4a;color:#99f6e4}
 body[data-theme="dark"] .insight-copy,
 body[data-theme="dark"] .note,

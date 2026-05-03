@@ -41,7 +41,7 @@ export function Appointments({ appointments, doctors, onRefresh, showModal, onCl
             <div key={item.id} className="appt">
               <div className="appt-date"><div className="appt-day">{item.day}</div><div className="appt-mon">{item.mon}</div></div>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{item.doctor}</div><div style={{fontSize:12.5,color:'#64748b'}}>{item.spec} · {item.place}</div></div>
-              <div style={{textAlign:'right'}}><div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{item.time}</div><span className={`badge ${badgeForStatus(item.status)}`}>{item.status}</span>{item.status !== 'cancelled' && <button className="btn btn-secondary btn-sm" style={{marginTop:6}} onClick={() => cancelAppointment(item.id)}>Cancel</button>}</div>
+              <div style={{textAlign:'right'}}><div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{item.time}</div><span className={`badge ${badgeForStatus(item.status)}`}>{item.status}</span>{item.isUpcomingActive && <button className="btn btn-secondary btn-sm" style={{marginTop:6}} onClick={() => cancelAppointment(item.id)}>Cancel</button>}</div>
             </div>
           )) : <div className="empty">No appointments yet.</div>}
         </div>

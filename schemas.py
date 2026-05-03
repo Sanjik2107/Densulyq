@@ -14,12 +14,40 @@ class AuthLogin(BaseModel):
     password: str
 
 
+class AuthMfaVerify(BaseModel):
+    challenge_token: str
+    code: str
+
+
 class AuthRegister(BaseModel):
     name: str
     username: str
     password: str
     email: Optional[str] = None
     phone: Optional[str] = None
+
+
+class PasswordResetRequest(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    password: str
+
+
+class VerificationRequest(BaseModel):
+    channel: str
+
+
+class VerificationConfirm(BaseModel):
+    channel: str
+    code: str
+
+
+class TwoFactorToggle(BaseModel):
+    enabled: bool
 
 
 class AppointmentCreate(BaseModel):
@@ -93,3 +121,4 @@ class AdminUserUpdate(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     password: Optional[str] = None
+    two_factor_enabled: Optional[bool] = None
